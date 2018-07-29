@@ -1,23 +1,29 @@
-src=./src
-bin=./bin
+SRC=./src
+BIN=./bin
+OPTIMIZATION=
 
-all: $(bin)/ertms $(bin)/train
-	@echo The executables are in the $(bin) folder
+.PHONY: bin
 
-ertms $(bin)/ertms: $(bin)/ertms.o
-	gcc $(bin)/ertms.o -o $(bin)/ertms
+all: bin $(BIN)/ertms $(BIN)/train
+	@echo The executables are in the $(BIN) folder
+
+ertms $(BIN)/ertms: bin $(BIN)/ertms.o
+	gcc $(OPTIMIZATION) $(BIN)/ertms.o -o $(BIN)/ertms
     
-$(bin)/ertms.o: $(src)/ertms.c
-	gcc -c $(src)/ertms.c -o $(bin)/ertms.o
+$(BIN)/ertms.o: $(SRC)/ertms.c
+	gcc $(OPTIMIZATION) -c $(SRC)/ertms.c -o $(BIN)/ertms.o
 
-train $(bin)/train: $(bin)/train.o $(bin)/route.o
-	gcc $(bin)/train.o $(bin)/route.o -o $(bin)/train
+train $(BIN)/train: bin $(BIN)/train.o $(BIN)/route.o
+	gcc $(OPTIMIZATION) $(BIN)/train.o $(BIN)/route.o -o $(BIN)/train
 
-$(bin)/train.o: $(src)/train.c $(src)/route.h
-	gcc -c $(src)/train.c -o $(bin)/train.o
+$(BIN)/train.o: $(SRC)/train.c $(SRC)/route.h
+	gcc $(OPTIMIZATION) -c $(SRC)/train.c -o $(BIN)/train.o
 
-$(bin)/route.o: $(src)/route.c $(src)/route.h
-	gcc -c $(src)/route.c -o $(bin)/route.o
+$(BIN)/route.o: $(SRC)/route.c $(SRC)/route.h
+	gcc $(OPTIMIZATION) -c $(SRC)/route.c -o $(BIN)/route.o
+
+bin: 
+	mkdir -p $(BIN)
 
 clean:
-	rm -r $(src)
+	rm -r $(BIN)
