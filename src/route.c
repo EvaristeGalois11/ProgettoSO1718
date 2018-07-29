@@ -69,18 +69,3 @@ Node *buildNode(char *name) {
     }
     return node;	
 }
-
-int main(void) { // XXX solo per testing
-    Node *temp = generateRoute("../resources/routes/T1");
-    
-    while (temp != NULL) {
-        printf("id = %d\n", temp -> id);
-        temp = temp -> next;
-    }
-    //char *temp = readLine("../resources/routes/T1");
-    //printf("%s | %d\n", temp, strlen(temp));
-    //free(temp);
-    //printf("%d\n", decodify("MA2"));
-    //printf("%d\n", decodify("S90293"));
-    //printf("%d\n", decodify("pippo"));
-}
