@@ -1,3 +1,6 @@
 #gli eseguibili e i file di supporto non vanno versionati
 bin/*
 !bin/.gitkeep
+
+#esclude directory MAx ovunque sia
+**/MAx
