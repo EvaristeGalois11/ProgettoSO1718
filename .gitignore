@@ -1,1 +1,3 @@
-*.o
+#gli eseguibili e i file di supporto non vanno versionati
+bin/*
+!bin/.gitkeep
