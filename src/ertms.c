@@ -15,6 +15,11 @@
 #define TRAIN_PROCESS_NAME "train"
 #define NUMBER_OF_MA 16
 #define NUMBER_OF_TRAINS 5
+#define ETCS1 "ETCS1"
+#define	ETCS2 "ETCS2"
+#define RBC	"RBC"
+
+typedef enum {other,etcs,rbc} launchmode;
 
 static void createDirIfNotExist(char *);
 static void createMAxFiles(int);
@@ -23,11 +28,20 @@ static pid_t *startTrains(int, char *);
 static void waitTrainsTermination();
 static char *getExePath(char*);
 static char *truncExeName(char*);
-
+static int checkLaunchMode(int, char*[]);
 
 static char *exeDirPath;
 
 int main(int argc, char *argv[]) {
+	launchmode launchMode=checkLaunchMode(argc,argv);
+	if (launchMode==other){
+		printf("selezionare un modo per lanciare il programma ETCS1 | ETCS2 | ETCS2 RBC\n");
+		return 0;
+	}
+	else if (launchMode==rbc){
+		printf("stiamo avviando il server Kappa :)\n");
+		return 0;
+	}
 	exeDirPath=truncExeName(getExePath(EXE_INFO_PATH));
 	mode_t previousMask = umask(0000);
 	createDirIfNotExist(MAX_DIR_PATH);
@@ -36,6 +50,14 @@ int main(int argc, char *argv[]) {
 	waitTrainsTermination();
 	free(pids);
 	umask(previousMask);
+	return 0;
+}
+
+int checkLaunchMode(int argc, char *argv[]){
+	if (argc==2 && (strcmp(argv[1],ETCS1)==0||strcmp(argv[1],ETCS2)==0))
+		return 1;
+	else if (argc==3 && strcmp(argv[1],ETCS2)==0 && strcmp(argv[2],RBC)==0)
+		return 2;
 	return 0;
 }
 
