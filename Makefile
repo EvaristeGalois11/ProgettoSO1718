@@ -11,7 +11,7 @@ ertms: $(BIN)/ertms
 train: $(BIN)/train
 	
 $(BIN)/ertms: $(BIN)/ertms.o
-	gcc $(OPTIMIZATION) $(BIN)/ertms.o -o $(BIN)/ertms
+	gcc $(OPTIMIZATION) $(BIN)/ertms.o -o $(BIN)/ertms -lm
     
 $(BIN)/ertms.o: $(SRC)/ertms.c
 	gcc $(OPTIMIZATION) -c $(SRC)/ertms.c -o $(BIN)/ertms.o
