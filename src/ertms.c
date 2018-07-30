@@ -125,7 +125,7 @@ pid_t *startTrains(int num, char *mode) {
 			char pathExe[len];
 			sprintf(pathExe,"%s%s",exeDirPath,TRAIN_PROCESS_NAME);
 			sprintf(id, "%d", i);
-			execl(pathExe, TRAIN_PROCESS_NAME, id, mode, NULL);
+			execl(pathExe, pathExe, id, mode, NULL);
 			perror("Child");
 			exit(errno);
 		}
