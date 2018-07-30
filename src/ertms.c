@@ -83,7 +83,7 @@ void createMAxFiles(int num) {
 	char path[maxPathLength];
 	for (int i = 1; i < num + 1; i++) {
 		sprintf(path, "%s%s%s%d",exeDirPath, MAX_DIR_PATH, MA_FILE_PREFIX, i);
-		int fd = open(path, O_CREAT | O_RDWR, 0777);
+		int fd = open(path, O_CREAT | O_RDWR | O_TRUNC, 0777);
 		write(fd, "0", 1);
 		close(fd);
 	}
