@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <errno.h>
 
 #define MAX_DIR_PATH "../resources/MAx"
 #define MA_FILE_PREFIX "/MA"
@@ -63,6 +64,8 @@ pid_t *startTrains(int num, char *mode) {
 		if ((pids[i] = fork()) == 0) {	//sono un figlio (di troia)
 			sprintf(id, "%d", i);
 			execl(TRAIN_PROCESS_PATH, TRAIN_PROCESS_NAME, id, mode, NULL);
+			perror("Child");
+			exit(errno);
 		}
 	}
 	return pids;
@@ -73,6 +76,6 @@ void waitTrainsTermination() {
 	pid_t pid;
 	for (int i = NUMBER_OF_TRAINS; i > 0; i--) {
 		pid = wait(&status);
-		printf("Child with PID %ld exited with status 0x%x\n", (long)pid, status);
+		printf("Child with PID %ld exited with status 0x%x\n", (long) pid, status);
 	}
 }
