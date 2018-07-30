@@ -68,14 +68,18 @@ char *truncExeName(char *exePath){
 
 void createDirIfNotExist(char *dir) {
 	struct stat st;
-	if (stat(dir, &st) == -1) {
-		mkdir(dir, 0777);
+	const unsigned int len=strlen(exeDirPath)+strlen(dir)+1;
+	char pathExe[len];
+	strcpy(pathExe,exeDirPath);
+	strcat(pathExe,dir);
+	if (stat(pathExe, &st) == -1) {
+		mkdir(pathExe, 0777);
 	}
 }
 
 void createMAxFiles(int num) {
 	int maxDigits = countDigits(num);
-	int maxPathLength = strlen(MAX_DIR_PATH) + strlen(MA_FILE_PREFIX) + maxDigits + 1;
+	int maxPathLength = strlen(exeDirPath) + strlen(MAX_DIR_PATH) + strlen(MA_FILE_PREFIX) + maxDigits + 1;
 	char path[maxPathLength];
 	for (int i = 1; i < num + 1; i++) {
 		sprintf(path, "%s%s%s%d",exeDirPath, MAX_DIR_PATH, MA_FILE_PREFIX, i);
