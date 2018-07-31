@@ -12,48 +12,50 @@
 #define EXE_INFO_PATH "/proc/self/exe"
 #define TRAIN_PROCESS_NAME "train"
 #define NUMBER_OF_MA 16
-#define NUMBER_OF_TRAINS 1
+#define NUMBER_OF_TRAINS 5
 #define ETCS1 "ETCS1"
 #define	ETCS2 "ETCS2"
 #define RBC	"RBC"
 
-typedef enum {other, etcs, rbc} launchmode;
-
-static int checkLaunchMode(int, char*[]);
 static char *getExePath();
 static void createDirIfNotExist(char *);
 static void createMAxFiles(int);
 static pid_t *startTrains(int, char *);
-static void waitTrainsTermination();
+static void waitTrainsTermination(int);
+static void launchETSC(char*);
+static void launchRBC();
 
 extern char *exeDirPath;
 
 int main(int argc, char *argv[]) {
-	launchmode launchMode = checkLaunchMode(argc, argv);
-	if (launchMode == other) {
-		printf("selezionare un modo per lanciare il programma ETCS1 | ETCS2 | ETCS2 RBC\n");
-		return 0;
-	} else if (launchMode == rbc) {
-		printf("stiamo avviando il server Kappa :)\n");
-		return 0;
-	}
+	
 	exeDirPath = truncExeName(getExePath());
 	mode_t previousMask = umask(0000);
 	createDirIfNotExist(MAX_DIR_PATH);
 	createMAxFiles(NUMBER_OF_MA);
-	pid_t *pids = startTrains(NUMBER_OF_TRAINS, argv[1]);
-	waitTrainsTermination();
-	free(pids);
+	
+	if (argc == 2 && (strcmp(argv[1], ETCS1) == 0 || strcmp(argv[1], ETCS2) == 0)){
+		launchETSC(argv[1]);
+		return 0;
+	}else if (argc == 3 && strcmp(argv[1], ETCS2) == 0 && strcmp(argv[2], RBC) == 0){
+		launchRBC();
+		return 0;
+	}else{
+		printf("selezionare un modo valido per lanciare il programma ETCS1 | ETCS2 | ETCS2 RBC\n");
+		return 0;
+	}
+
 	umask(previousMask);
 	return 0;
 }
+void launchETSC(char *argv){
+	pid_t *pids = startTrains(NUMBER_OF_TRAINS, argv);
+	waitTrainsTermination(NUMBER_OF_TRAINS);
+	free(pids);
+}
 
-int checkLaunchMode(int argc, char *argv[]) {
-	if (argc == 2 && (strcmp(argv[1], ETCS1) == 0 || strcmp(argv[1], ETCS2) == 0))
-		return 1;
-	else if (argc == 3 && strcmp(argv[1], ETCS2) == 0 && strcmp(argv[2], RBC) == 0)
-		return 2;
-	return 0;
+void launchRBC(){
+	printf("stiamo avviando il server Kappa :)\n");
 }
 
 char *getExePath() {
@@ -96,7 +98,6 @@ void createMAxFiles(int num) {
 }
 
 pid_t *startTrains(int num, char *mode) {
-	num++;
 	int maxDigits = countDigits(num);
 	pid_t *pids = malloc(sizeof(pid_t) * num);
 	char id[maxDigits + 1];
@@ -105,7 +106,7 @@ pid_t *startTrains(int num, char *mode) {
 			int len = strlen(exeDirPath) + strlen(TRAIN_PROCESS_NAME) + 1;
 			char pathExe[len];
 			sprintf(pathExe, "%s%s", exeDirPath, TRAIN_PROCESS_NAME);
-			sprintf(id, "%d", i);
+			sprintf(id, "%d", i+1); //id numerato da 1 a 5
 			execl(pathExe, pathExe, id, mode, NULL);
 			perror("Child");
 			exit(errno);
@@ -114,10 +115,10 @@ pid_t *startTrains(int num, char *mode) {
 	return pids;
 }
 
-void waitTrainsTermination() {
+void waitTrainsTermination(int num) {
 	int status;
 	pid_t pid;
-	for (int i = NUMBER_OF_TRAINS; i > 0; i--) {
+	for (int i = num; i > 0; i--) {
 		pid = wait(&status);
 		printf("Child with PID %ld exited with status 0x%x\n", (long) pid, status);
 	}
