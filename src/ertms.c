@@ -6,43 +6,38 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-#include <math.h>
 #include <errno.h>
+#include "common.h"
 
 #define EXE_INFO_PATH "/proc/self/exe"
-#define MAX_DIR_PATH "../resources/MAx"
-#define MA_FILE_PREFIX "/MA"
 #define TRAIN_PROCESS_NAME "train"
 #define NUMBER_OF_MA 16
-#define NUMBER_OF_TRAINS 5
+#define NUMBER_OF_TRAINS 1
 #define ETCS1 "ETCS1"
 #define	ETCS2 "ETCS2"
 #define RBC	"RBC"
 
 typedef enum {other, etcs, rbc} launchmode;
 
+static int checkLaunchMode(int, char*[]);
+static char *getExePath();
 static void createDirIfNotExist(char *);
 static void createMAxFiles(int);
-static int countDigits(int);
 static pid_t *startTrains(int, char *);
 static void waitTrainsTermination();
-static char *getExePath(char*);
-static char *truncExeName(char*);
-static int checkLaunchMode(int, char*[]);
 
-static char *exeDirPath;
+extern char *exeDirPath;
 
 int main(int argc, char *argv[]) {
 	launchmode launchMode = checkLaunchMode(argc, argv);
 	if (launchMode == other) {
 		printf("selezionare un modo per lanciare il programma ETCS1 | ETCS2 | ETCS2 RBC\n");
 		return 0;
-	}
-	else if (launchMode == rbc) {
+	} else if (launchMode == rbc) {
 		printf("stiamo avviando il server Kappa :)\n");
 		return 0;
 	}
-	exeDirPath = truncExeName(getExePath(EXE_INFO_PATH));
+	exeDirPath = truncExeName(getExePath());
 	mode_t previousMask = umask(0000);
 	createDirIfNotExist(MAX_DIR_PATH);
 	createMAxFiles(NUMBER_OF_MA);
@@ -61,36 +56,26 @@ int checkLaunchMode(int argc, char *argv[]) {
 	return 0;
 }
 
-char *getExePath(char *filename) {
+char *getExePath() {
 	int size = 10;
 	char *buffer = NULL;
 	while (1) {
 		buffer = realloc(buffer, size);
-		int nchars = readlink (filename, buffer, size);
+		int nchars = readlink (EXE_INFO_PATH, buffer, size);
 		if (nchars < 0) { //errore se nchars=-1
 			free(buffer);
 			return NULL;
-		}
-		else if (nchars < size)return buffer;
-		else size *= 2; //se nchars==size il filename e' stato troncato e ha bisogno di più spazio
+		} else if (nchars < size) {
+			return buffer;
+		} else {
+			size *= 2;
+		} //se nchars==size il filename e' stato troncato e ha bisogno di più spazio
 	}
-}
-
-char *truncExeName(char *exePath) {
-	int len = strlen(exePath);
-	while (exePath[len] != '/' && len >= 0) {
-		len--;
-	}
-	if (len == 0)return exePath; //errore nel path, non modificare
-	len += 1;	//len+1 per il terminatore
-	exePath = realloc(exePath, len);
-	exePath[len] = '\0';
-	return exePath;
 }
 
 void createDirIfNotExist(char *dir) {
 	struct stat st;
-	const unsigned int len = strlen(exeDirPath) + strlen(dir) + 1;
+	int len = strlen(exeDirPath) + strlen(dir) + 1;
 	char pathExe[len];
 	strcpy(pathExe, exeDirPath);
 	strcat(pathExe, dir);
@@ -100,28 +85,24 @@ void createDirIfNotExist(char *dir) {
 }
 
 void createMAxFiles(int num) {
-	int maxDigits = countDigits(num);
-	int maxPathLength = strlen(exeDirPath) + strlen(MAX_DIR_PATH) + strlen(MA_FILE_PREFIX) + maxDigits + 1;
-	char path[maxPathLength];
+	char *path = malloc(sizeof(char) * getPathMAxFileLength(num));
 	for (int i = 1; i < num + 1; i++) {
-		sprintf(path, "%s%s%s%d", exeDirPath, MAX_DIR_PATH, MA_FILE_PREFIX, i);
+		formatPathMAxFile(&path, i);
 		int fd = open(path, O_CREAT | O_RDWR | O_TRUNC, 0777);
 		write(fd, "0", 1);
 		close(fd);
 	}
-}
-
-int countDigits(int n) {
-	return (int) log10(n) + 1;
+	free(path);
 }
 
 pid_t *startTrains(int num, char *mode) {
+	num++;
 	int maxDigits = countDigits(num);
 	pid_t *pids = malloc(sizeof(pid_t) * num);
 	char id[maxDigits + 1];
 	for (int i = 0; i < num; i++) {
-		if ((pids[i] = fork()) == 0) {	//sono un figlio (di troia)
-			const unsigned int len = strlen(exeDirPath) + strlen(TRAIN_PROCESS_NAME) + 1;
+		if ((pids[i] = fork()) == 0) {
+			int len = strlen(exeDirPath) + strlen(TRAIN_PROCESS_NAME) + 1;
 			char pathExe[len];
 			sprintf(pathExe, "%s%s", exeDirPath, TRAIN_PROCESS_NAME);
 			sprintf(id, "%d", i);
