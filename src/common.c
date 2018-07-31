@@ -40,17 +40,17 @@ int getPathMAxFileLength(int id) {
 }
 
 int getPathRouteFileLength(int id) {
-	return getGenericPathLength(id, exeDirPath, ROUTE_FILE_PREFIX, ROUTE_FILE_PREFIX, NULL);
+	return getGenericPathLength(id, exeDirPath, ROUTES_DIR_PATH, ROUTE_FILE_PREFIX, NULL);
 }
 
 int getGenericPathLength(int num, ...) {
 	va_list argp;
 	va_start(argp, num);
-	int result;
+	int result = 0;
 	char *string = va_arg(argp, char *);
 	while (string != NULL) {
-		string = va_arg(argp, char *);
 		result += strlen(string);
+		string = va_arg(argp, char *);
 	}
 	va_end(argp);
 	return result;

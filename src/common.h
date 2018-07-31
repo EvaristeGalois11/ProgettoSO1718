@@ -7,6 +7,6 @@ int countDigits(int);
 int toInt(char *);
 char *truncExeName(char *);
 int getPathMAxFileLength(int);
-void formatPathMAxFile(char **, int);
 int getPathRouteFileLength(int);
+void formatPathMAxFile(char **, int);
 void formatPathRouteFile(char **, int);

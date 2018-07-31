@@ -14,7 +14,7 @@ static Node *readAndDecodeRoute();
 
 int main(int argc, char *argv[]) {
 	setUpExeDirPath(argv[0]);
-	id = toInt(argv[1]) + 1;
+	id = toInt(argv[1]);
 	mode = argv[2];
 
 	printf("treno numero %d in directory %s avviato in modalità %s\n", id, exeDirPath, mode);
