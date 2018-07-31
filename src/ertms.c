@@ -28,33 +28,29 @@ static void launchRBC();
 extern char *exeDirPath;
 
 int main(int argc, char *argv[]) {
-	
 	exeDirPath = truncExeName(getExePath());
-	mode_t previousMask = umask(0000);
-	createDirIfNotExist(MAX_DIR_PATH);
-	createMAxFiles(NUMBER_OF_MA);
-	
-	if (argc == 2 && (strcmp(argv[1], ETCS1) == 0 || strcmp(argv[1], ETCS2) == 0)){
+
+	if (argc == 2 && (strcasecmp(argv[1], ETCS1) == 0 || strcasecmp(argv[1], ETCS2) == 0)) {
+		mode_t previousMask = umask(0000);
+		createDirIfNotExist(MAX_DIR_PATH);
+		createMAxFiles(NUMBER_OF_MA);
 		launchETSC(argv[1]);
-		return 0;
-	}else if (argc == 3 && strcmp(argv[1], ETCS2) == 0 && strcmp(argv[2], RBC) == 0){
+		umask(previousMask);
+	} else if (argc == 3 && strcasecmp(argv[1], ETCS2) == 0 && strcasecmp(argv[2], RBC) == 0) {
 		launchRBC();
-		return 0;
-	}else{
+	} else {
 		printf("selezionare un modo valido per lanciare il programma ETCS1 | ETCS2 | ETCS2 RBC\n");
-		return 0;
 	}
 
-	umask(previousMask);
 	return 0;
 }
-void launchETSC(char *argv){
+void launchETSC(char *argv) {
 	pid_t *pids = startTrains(NUMBER_OF_TRAINS, argv);
 	waitTrainsTermination(NUMBER_OF_TRAINS);
 	free(pids);
 }
 
-void launchRBC(){
+void launchRBC() {
 	printf("stiamo avviando il server Kappa :)\n");
 }
 
@@ -106,7 +102,7 @@ pid_t *startTrains(int num, char *mode) {
 			int len = strlen(exeDirPath) + strlen(TRAIN_PROCESS_NAME) + 1;
 			char pathExe[len];
 			sprintf(pathExe, "%s%s", exeDirPath, TRAIN_PROCESS_NAME);
-			sprintf(id, "%d", i+1); //id numerato da 1 a 5
+			sprintf(id, "%d", i + 1); //id numerato da 1 a 5
 			execl(pathExe, pathExe, id, mode, NULL);
 			perror("Child");
 			exit(errno);
