@@ -9,7 +9,7 @@ void listen();
 
 int main(int argc, char *argv[]){
 	creaStrutturaDatiSegmenti();
-	Node *percorsiTreni[5];
+	Node **percorsiTreni;
 	percorsiTreni=importaPercorsiTreni(argv[1]);
 
 	creaServer();

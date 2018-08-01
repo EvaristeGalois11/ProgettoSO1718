@@ -1,7 +1,7 @@
 SRC=./src
 BIN=./bin
 OPTIMIZATION=-o3
-PROGRAMS=$(BIN)/ertms $(BIN)/train
+PROGRAMS=$(BIN)/ertms $(BIN)/train $(BIN)/rbc
 
 all: $(PROGRAMS)
 	@echo The executables are in the $(BIN) folder
@@ -9,6 +9,8 @@ all: $(PROGRAMS)
 ertms: $(BIN)/ertms
 	
 train: $(BIN)/train
+
+rbc: $(BIN)/rbc
 	
 $(BIN)/ertms: $(BIN)/ertms.o $(BIN)/common.o
 	gcc $(OPTIMIZATION) $(BIN)/ertms.o $(BIN)/common.o -o $(BIN)/ertms -lm
@@ -21,6 +23,12 @@ $(BIN)/train: $(BIN)/train.o $(BIN)/route.o $(BIN)/common.o
 
 $(BIN)/train.o: $(SRC)/train.c $(SRC)/route.h
 	gcc $(OPTIMIZATION) -c $(SRC)/train.c -o $(BIN)/train.o
+
+$(BIN)/rbc: $(BIN)/rbc.o $(BIN)/route.o $(BIN)/common.o
+	gcc $(OPTIMIZATION) $(BIN)/rbc.o $(BIN)/route.o $(BIN)/common.o -o $(BIN)/rbc -lm
+
+$(BIN)/rbc.o: $(SRC)/rbc.c
+	gcc $(OPTIMIZATION) -c $(SRC)/rbc.c -o $(BIN)/rbc.o
 
 $(BIN)/route.o: $(SRC)/route.c $(SRC)/route.h
 	gcc $(OPTIMIZATION) -c $(SRC)/route.c -o $(BIN)/route.o
