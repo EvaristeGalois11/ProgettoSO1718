@@ -7,8 +7,6 @@
 
 char *exeDirPath;
 
-static char *buildGenericPath(const char *, ...);
-
 int countDigits(int n) {
 	if (n == 0) {
 		return 1;
@@ -36,14 +34,22 @@ char *truncExeName(char *exePath) {
 }
 
 char *buildPathMAxFile(int id) {
-	return buildGenericPath("%s%s%s%d", exeDirPath, MAX_DIR_PATH, MA_FILE_PREFIX, id);
+	return csprintf("%s%s%s%d", exeDirPath, MAX_DIR_PATH, MA_FILE_PREFIX, id);
 }
 
 char *buildPathRouteFile(int id) {
-	return buildGenericPath("%s%s%s%d", exeDirPath, ROUTES_DIR_PATH, ROUTE_FILE_PREFIX, id);
+	return csprintf("%s%s%s%d", exeDirPath, ROUTES_DIR_PATH, ROUTE_FILE_PREFIX, id);
 }
 
-char *buildGenericPath(const char *format, ...) {
+char *buildPathTrainLogFile(int id) {
+	return csprintf("%s%s%s%d%s", exeDirPath, LOG_DIR_PATH, LOG_TRAIN_FILE_PREFIX, id, LOG_EXTENSION);
+}
+
+char *buildPathRbcLogFile() {
+	return csprintf("%s%s%s%s", exeDirPath, LOG_DIR_PATH, LOG_RBC_FILE_PREFIX, LOG_EXTENSION);
+}
+
+char *csprintf(const char *format, ...) {
 	va_list arglist1, arglist2;
 	va_start(arglist1, format);
 	va_copy(arglist2, arglist1);

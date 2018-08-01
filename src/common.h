@@ -12,3 +12,6 @@ int toInt(char *);
 char *truncExeName(char *);
 char *buildPathMAxFile(int);
 char *buildPathRouteFile(int);
+char *buildPathTrainLogFile(int);
+char *buildPathRbcLogFile();
+char *csprintf(const char *, ...);
