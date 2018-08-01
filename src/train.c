@@ -21,7 +21,6 @@ static int requestModeEtcs1(int, int, int);
 static int requestModeEtcs2(int, int, int);
 static int checkMAxFile(int id);
 static void startTravel();
-static char *getPathMAxFile(int);
 static char readOneByte(char *);
 static void writeOneByte(char *, char *);
 static void move(int, int);
@@ -43,9 +42,7 @@ void setUpExeDirPath(char *exePath) {
 }
 
 Node *readAndDecodeRoute() {
-	int length = getPathRouteFileLength(id);
-	char *path = malloc(sizeof(char) * length);
-	formatPathRouteFile(&path, id);
+	char *path = buildPathRouteFile(id);
 	Node *result = generateRoute(path);
 	free(path);
 	return result;
@@ -62,7 +59,7 @@ int requestModeEtcs1(int train, int curr, int next) {
 
 int checkMAxFile(int id) {
 	// TODO lockare o sincronizzare? questo è il problema
-	char *path = getPathMAxFile(id);
+	char *path = buildPathMAxFile(id);
 	char byte = readOneByte(path);
 	free(path);
 	return (byte == '0');
@@ -87,13 +84,6 @@ void startTravel() {
 	}
 }
 
-char *getPathMAxFile(int id) {
-	int length = getPathMAxFileLength(id);
-	char *path = malloc(sizeof(char) * length);
-	formatPathMAxFile(&path, id);
-	return path;
-}
-
 char readOneByte(char *path) {
 	int descriptor = open(path, O_RDONLY);
 	char byte[1];
@@ -110,12 +100,12 @@ void writeOneByte(char *path, char *byte) {
 
 void move(int curr, int next) {
 	if (curr > 0) {
-		char *currPath = getPathMAxFile(curr);
+		char *currPath = buildPathMAxFile(curr);
 		writeOneByte(currPath, "0");
 		free(currPath);
 	}
 	if (next > 0) {
-		char *nextPath = getPathMAxFile(next);
+		char *nextPath = buildPathMAxFile(next);
 		writeOneByte(nextPath, "1");
 		free(nextPath);
 	}

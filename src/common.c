@@ -7,7 +7,7 @@
 
 char *exeDirPath;
 
-static int getGenericPathLength(int, ...);
+static char *buildGenericPath(const char *, ...);
 
 int countDigits(int n) {
 	if (n == 0) {
@@ -35,31 +35,22 @@ char *truncExeName(char *exePath) {
 	return exePath;
 }
 
-int getPathMAxFileLength(int id) {
-	return getGenericPathLength(id, exeDirPath, MAX_DIR_PATH, MA_FILE_PREFIX, NULL);
+char *buildPathMAxFile(int id) {
+	return buildGenericPath("%s%s%s%d", exeDirPath, MAX_DIR_PATH, MA_FILE_PREFIX, id);
 }
 
-int getPathRouteFileLength(int id) {
-	return getGenericPathLength(id, exeDirPath, ROUTES_DIR_PATH, ROUTE_FILE_PREFIX, NULL);
+char *buildPathRouteFile(int id) {
+	return buildGenericPath("%s%s%s%d", exeDirPath, ROUTES_DIR_PATH, ROUTE_FILE_PREFIX, id);
 }
 
-int getGenericPathLength(int num, ...) {
-	va_list argp;
-	va_start(argp, num);
-	int result = 0;
-	char *string = va_arg(argp, char *);
-	while (string != NULL) {
-		result += strlen(string);
-		string = va_arg(argp, char *);
-	}
-	va_end(argp);
-	return result;
-}
-
-void formatPathMAxFile(char **path, int id) {
-	sprintf(*path, "%s%s%s%d", exeDirPath, MAX_DIR_PATH, MA_FILE_PREFIX, id);
-}
-
-void formatPathRouteFile(char **path, int id) {
-	sprintf(*path, "%s%s%s%d", exeDirPath, ROUTES_DIR_PATH, ROUTE_FILE_PREFIX, id);
+char *buildGenericPath(const char *format, ...) {
+	va_list arglist1, arglist2;
+	va_start(arglist1, format);
+	va_copy(arglist2, arglist1);
+	int needed = vsnprintf(NULL, 0, format, arglist1);
+	char  *path = malloc(needed + 1);
+	vsprintf(path, format, arglist2);
+	va_end(arglist1);
+	va_end(arglist2);
+	return path;
 }

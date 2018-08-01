@@ -83,14 +83,13 @@ void createDirIfNotExist(char *dir) {
 }
 
 void createMAxFiles(int num) {
-	char *path = malloc(sizeof(char) * getPathMAxFileLength(num));
 	for (int i = 1; i < num + 1; i++) {
-		formatPathMAxFile(&path, i);
+		char *path = buildPathMAxFile(i);
 		int fd = open(path, O_CREAT | O_RDWR | O_TRUNC, 0777);
 		write(fd, "0", 1);
 		close(fd);
+		free(path);
 	}
-	free(path);
 }
 
 pid_t *startTrains(int num, char *mode) {
