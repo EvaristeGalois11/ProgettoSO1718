@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include "route.h"
 #include "common.h"
+#include "log.h"
 
 #define SLEEP_TIME 3
 
@@ -29,7 +30,6 @@ int main(int argc, char *argv[]) {
 	setUpExeDirPath(argv[0]);
 	id = toInt(argv[1]);
 	requestMode = (strcmp(argv[2], "ETCS1") == 0) ? requestModeEtcs1 : requestModeEtcs2;
-	printf("treno numero %d in directory %s avviato in modalità %s\n", id, exeDirPath, argv[2]); // XXX temporaneo
 	current = readAndDecodeRoute();
 	startTravel();
 	return 0;
@@ -49,7 +49,6 @@ Node *readAndDecodeRoute() {
 }
 
 int requestModeEtcs1(int train, int curr, int next) {
-	printf("treno %d da %d a %d\n", train, curr, next);
 	if (next <= 0) {
 		return 1;
 	} else {
@@ -73,9 +72,9 @@ int requestModeEtcs2(int train, int curr, int next) {
 void startTravel() {
 	while (current != NULL) {
 		// TODO aspettare gli altri treni
-		// TODO loggare posizione corrente e posizione futura
 		Node *next = current -> next;
 		int nextId = (next != NULL) ? next -> id : 0;
+		logTrain(id, current -> id, nextId);
 		if (requestModeEtcs1(id, current -> id, nextId)) {
 			move(current -> id, nextId);
 			current = next;

@@ -33,6 +33,7 @@ int main(int argc, char *argv[]) {
 	if (argc == 2 && (strcasecmp(argv[1], ETCS1) == 0 || strcasecmp(argv[1], ETCS2) == 0)) {
 		mode_t previousMask = umask(0000);
 		createDirIfNotExist(MAX_DIR_PATH);
+		createDirIfNotExist(LOG_DIR_PATH);
 		createMAxFiles(NUMBER_OF_MA);
 		launchETSC(argv[1]);
 		umask(previousMask);

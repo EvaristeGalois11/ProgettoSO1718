@@ -3,9 +3,12 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include "route.h"
+#include "common.h"
 
 #define MA_PREFIX "MA"
+#define MA_TEMPLATE MA_PREFIX"%d"
 #define STATION_PREFIX "S"
+#define STATION_TEMPLATE STATION_PREFIX"%d"
 #define CSV_SEPARATOR ","
 
 static Node *buildNode(char *);
@@ -60,12 +63,22 @@ Node *buildNode(char *name) {
 	Node *node = malloc(sizeof(Node));
 	node -> next = NULL;
 	if (strstr(name , MA_PREFIX) != NULL) {
-		sscanf(name, MA_PREFIX"%d", &(node -> id));
+		sscanf(name, MA_TEMPLATE, &(node -> id));
 	} else if (strstr(name , STATION_PREFIX) != NULL) {
-		sscanf(name, STATION_PREFIX"%d", &(node -> id));
+		sscanf(name, STATION_TEMPLATE, &(node -> id));
 		node -> id *= -1;
 	} else {
 		fprintf(stderr, "%s is not a valid string!\n", name);
 	}
 	return node;
+}
+
+char *decodeId(int id) {
+	if (id < 0) {
+		return csprintf(STATION_TEMPLATE, -id);
+	} else if (id > 0) {
+		return csprintf(MA_TEMPLATE, id);
+	} else {
+		return UNFREEABLE_STRING;
+	}
 }
