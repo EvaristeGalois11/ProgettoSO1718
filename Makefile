@@ -13,7 +13,7 @@ train: $(BIN)/train
 rbc: $(BIN)/rbc
 	
 $(BIN)/ertms: $(BIN)/ertms.o $(BIN)/common.o
-	gcc $(OPTIMIZATION) $(BIN)/ertms.o $(BIN)/common.o -o $(BIN)/ertms -lm
+	gcc $(OPTIMIZATION) $(BIN)/ertms.o $(BIN)/common.o -o $(BIN)/ertms -lm -lrt -pthread 
 
 $(BIN)/ertms.o: $(SRC)/ertms.c
 	gcc $(OPTIMIZATION) -c $(SRC)/ertms.c -o $(BIN)/ertms.o

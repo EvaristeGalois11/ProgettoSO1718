@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
@@ -25,8 +26,10 @@ static void waitTrainsTermination(int);
 static void launchETSC(char*);
 static void launchRBC();
 static void setUpSharedVariableForTrains();
+static void cleanUpSharedVariableForTrains();
 
 extern char *exeDirPath;
+shared_data_trains *data_trains;
 
 int main(int argc, char *argv[]) {
 	exeDirPath = truncExeName(getExePath());
@@ -51,10 +54,34 @@ void launchETSC(char *argv) {
 	pid_t *pids = startTrains(NUMBER_OF_TRAINS, argv); //è veramente necessario registrare i pid dei treni?
 	waitTrainsTermination(NUMBER_OF_TRAINS);
 	free(pids);
+	cleanUpSharedVariableForTrains();
 }
 
 void setUpSharedVariableForTrains() {
+	int fd = shm_open(TRAIN_SHARED_NAME, O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
+	ftruncate(fd, sizeof(shared_data_trains));
+	data_trains = (shared_data_trains*) mmap(0, sizeof(shared_data_trains), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
+	pthread_mutexattr_t mutex_attr;
+	pthread_mutexattr_init(&mutex_attr);
+	pthread_mutexattr_setpshared(&mutex_attr, PTHREAD_PROCESS_SHARED);
+	pthread_mutex_init(&data_trains->mutex, &mutex_attr);
+	pthread_mutexattr_destroy(&mutex_attr);
+
+	pthread_condattr_t cond_attr;
+	pthread_condattr_init(&cond_attr);
+	pthread_condattr_setpshared(&cond_attr, PTHREAD_PROCESS_SHARED);
+	pthread_cond_init(&data_trains->condvar, &cond_attr);
+	pthread_condattr_destroy(&cond_attr);
+
+	close(fd);
+}
+
+void cleanUpSharedVariableForTrains() {
+	pthread_cond_destroy(&data_trains->condvar);
+	pthread_mutex_destroy(&data_trains->mutex);
+	//munmap(data_trains, sizeof(shared_data_trains));
+	shm_unlink(TRAIN_SHARED_NAME);
 }
 
 void launchRBC() {
