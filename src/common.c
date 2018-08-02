@@ -34,7 +34,11 @@ char *truncExeName(char *exePath) {
 }
 
 char *buildPathMAxFile(int id) {
-	return csprintf("%s%s%s%d", exeDirPath, MAX_DIR_PATH, MA_FILE_PREFIX, id);
+	if (id > 0) {
+		return csprintf("%s%s%s%d", exeDirPath, MAX_DIR_PATH, MA_FILE_PREFIX, id);
+	} else {
+		return NULL;
+	}
 }
 
 char *buildPathRouteFile(int id) {
