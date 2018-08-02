@@ -24,6 +24,7 @@ static pid_t *startTrains(int, char *);
 static void waitTrainsTermination(int);
 static void launchETSC(char*);
 static void launchRBC();
+static void setUpSharedVariableForTrains();
 
 extern char *exeDirPath;
 
@@ -46,9 +47,14 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 void launchETSC(char *argv) {
-	pid_t *pids = startTrains(NUMBER_OF_TRAINS, argv);
+	setUpSharedVariableForTrains();
+	pid_t *pids = startTrains(NUMBER_OF_TRAINS, argv); //è veramente necessario registrare i pid dei treni?
 	waitTrainsTermination(NUMBER_OF_TRAINS);
 	free(pids);
+}
+
+void setUpSharedVariableForTrains() {
+
 }
 
 void launchRBC() {
@@ -58,29 +64,29 @@ void launchRBC() {
 char *getExePath() {
 	int size = 10;
 	char *buffer = NULL;
-	while (1) {
+	int ok = 0;
+	while (ok == 0) {
 		buffer = realloc(buffer, size);
 		int nchars = readlink (EXE_INFO_PATH, buffer, size);
-		if (nchars < 0) { //errore se nchars=-1
+		if (nchars < 0) {
 			free(buffer);
-			return NULL;
+			perror("Impossible to read the exe path");
+			exit(EXIT_FAILURE);
 		} else if (nchars < size) {
-			return buffer;
-		} else {
-			size *= 2;
-		} //se nchars==size il filename e' stato troncato e ha bisogno di più spazio
+			ok = 1;
+		}
+		size *= 2;
 	}
+	return buffer;
 }
 
 void createDirIfNotExist(char *dir) {
+	char *pathExe = csprintf(exeDirPath, dir);
 	struct stat st;
-	int len = strlen(exeDirPath) + strlen(dir) + 1;
-	char pathExe[len];
-	strcpy(pathExe, exeDirPath);
-	strcat(pathExe, dir);
 	if (stat(pathExe, &st) == -1) {
 		mkdir(pathExe, 0777);
 	}
+	free(pathExe);
 }
 
 void createMAxFiles(int num) {
@@ -101,11 +107,11 @@ pid_t *startTrains(int num, char *mode) {
 		if ((pids[i] = fork()) == 0) {
 			int len = strlen(exeDirPath) + strlen(TRAIN_PROCESS_NAME) + 1;
 			char pathExe[len];
-			sprintf(pathExe, "%s%s", exeDirPath, TRAIN_PROCESS_NAME);
+			sprintf(pathExe, "%s%s", exeDirPath, TRAIN_PROCESS_NAME); //FIXME se si usa csprintf dà come errore Permission denied
 			sprintf(id, "%d", i + 1); //id numerato da 1 a 5
 			execl(pathExe, pathExe, id, mode, NULL);
-			perror("Child");
-			exit(errno);
+			perror("Train not started");
+			exit(EXIT_FAILURE);
 		}
 	}
 	return pids;

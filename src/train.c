@@ -28,22 +28,8 @@ static void writeOneByte(int, char *);
 int lockExclusiveFile(char *);
 static int move(int, int);
 
-flock readLock = {
-	.l_type = F_RDLCK,
-	.l_whence = SEEK_SET,
-	.l_start = 0,
-	.l_len = 1,
-};
-
 flock writeLock = {
 	.l_type = F_WRLCK,
-	.l_whence = SEEK_SET,
-	.l_start = 0,
-	.l_len = 1,
-};
-
-flock unlock = {
-	.l_type = F_UNLCK,
 	.l_whence = SEEK_SET,
 	.l_start = 0,
 	.l_len = 1,
@@ -80,7 +66,6 @@ int requestModeEtcs1(int train, int curr, int next) {
 }
 
 int checkMAxFile(int id) {
-	// TODO lockare o sincronizzare? questo è il problema
 	char *path = buildPathMAxFile(id);
 	char byte = readOneByte(path);
 	free(path);
@@ -115,7 +100,6 @@ char readOneByte(char *path) {
 	printf("Treno: %d - Inizio lettura file: %s\n", id, path);
 	char byte[1];
 	read(descriptor, byte, 1);
-	//fcntl(descriptor, F_SETLKW, &unlock); // non necessario perché i lock sono automaticamente rimossi alla chiusura di un descrittore
 	printf("Treno: %d - Fine lettura file: %s\n", id, path);
 	close(descriptor);
 	return byte[0];
@@ -124,7 +108,6 @@ char readOneByte(char *path) {
 void writeOneByte(int descriptor, char *byte) {
 	write(descriptor, byte, 1);
 	fsync(descriptor);
-	fcntl(descriptor, F_SETLKW, &unlock);
 	close(descriptor);
 }
 
@@ -145,10 +128,10 @@ int move(int curr, int next) {
 	int descriptor2 = (nextPath == NULL) ? 0 : lockExclusiveFile(nextPath);
 
 	if (descriptor1 < 0 || descriptor2 < 0) {
-		if (currPath != NULL) {
+		if (currPath != NULL && descriptor1 > 0) {
 			close(descriptor1);
 		}
-		if (nextPath != NULL) {
+		if (nextPath != NULL && descriptor2 > 0) {
 			close(descriptor2);
 		}
 		return 0;
@@ -168,3 +151,4 @@ int move(int curr, int next) {
 	}
 	return 1;
 }
+
