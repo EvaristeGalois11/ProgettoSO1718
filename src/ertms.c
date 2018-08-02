@@ -80,7 +80,7 @@ void setUpSharedVariableForTrains() {
 void cleanUpSharedVariableForTrains() {
 	pthread_cond_destroy(&data_trains->condvar);
 	pthread_mutex_destroy(&data_trains->mutex);
-	//munmap(data_trains, sizeof(shared_data_trains));
+	munmap(data_trains, sizeof(shared_data_trains));
 	shm_unlink(TRAIN_SHARED_NAME);
 }
 
