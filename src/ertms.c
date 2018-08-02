@@ -108,7 +108,7 @@ char *getExePath() {
 }
 
 void createDirIfNotExist(char *dir) {
-	char *pathExe = csprintf(exeDirPath, dir);
+	char *pathExe = csprintf("%s%s", exeDirPath, dir);
 	struct stat st;
 	if (stat(pathExe, &st) == -1) {
 		mkdir(pathExe, 0777);
