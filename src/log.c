@@ -7,12 +7,16 @@
 #include "common.h"
 #include "route.h"
 
-#define LOG_TRAIN_TEMPLATE "[Attuale: %s], [Next: %s], %s %s\n"
-#define LOG_RBC_TEMPLATE "[TRENO RICHIEDENTE AUTORIZZAZIONE: T%d], [SEGMENTO ATTUALE: %s], [SEGMENTO RICHIESTO: %s], [AUTORIZZATO: %s], [DATA: %s %s]\n"
+#define LOG_TRAIN_TEMPLATE "[Attuale: %s], [Next: %s], %s\n"
+#define LOG_RBC_TEMPLATE "[TRENO RICHIEDENTE AUTORIZZAZIONE: T%d], [SEGMENTO ATTUALE: %s], [SEGMENTO RICHIESTO: %s], [AUTORIZZATO: %s], [DATA: %s]\n"
+#define TIME_TEMPLATE "%d %B %Y %H:%M:%S"
+#define TIME_BUFFER_LENGTH 30
 
 static char *getLogMessage(int, int, int, char *, int);
+static void formatTime();
 static void logOnFile(char *, char *);
 
+static char timeBuffer[TIME_BUFFER_LENGTH];
 
 void logTrain(int train, int curr, int next) {
 	char *path = buildPathTrainLogFile(train);
@@ -30,16 +34,23 @@ char *getLogMessage(int train, int curr, int next, char *response, int isTrain) 
 	char *currName = decodeId(curr);
 	char *nextName = decodeId(next);
 	char *log;
+	formatTime();
 	if (isTrain) {
-		log = csprintf(LOG_TRAIN_TEMPLATE, currName, nextName, __DATE__, __TIME__);
+		log = csprintf(LOG_TRAIN_TEMPLATE, currName, nextName, timeBuffer);
 	} else {
-		log = csprintf(LOG_RBC_TEMPLATE, train, currName, nextName, response, __DATE__, __TIME__);
+		log = csprintf(LOG_RBC_TEMPLATE, train, currName, nextName, response, timeBuffer);
 	}
 	free(currName);
 	if (strcmp(nextName, UNFREEABLE_STRING) != 0) {
 		free(nextName);
 	}
 	return log;
+}
+
+void formatTime() {
+	time_t seconds = time(NULL);
+	struct tm* tm_info = localtime(&seconds);
+	strftime(timeBuffer, TIME_BUFFER_LENGTH, TIME_TEMPLATE, tm_info);
 }
 
 void logOnFile(char *path, char *log) {
