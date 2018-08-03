@@ -52,7 +52,6 @@ char *getLogMessage(int train, int curr, int next, char *response, int isTrain) 
 void formatTime() {
 	time_t seconds = time(NULL);
 	struct tm* tm_info = localtime(&seconds);
-	setlocale(LC_TIME, "");
 	strftime(timeBuffer, TIME_BUFFER_LENGTH, TIME_TEMPLATE, tm_info);
 }
 

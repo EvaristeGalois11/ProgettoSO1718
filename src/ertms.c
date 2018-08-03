@@ -57,7 +57,7 @@ void launchETSC(char *argv) {
 }
 
 void setUpSharedVariableForTrains() {
-	int fd = shm_open(TRAIN_SHARED_NAME, O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
+	int fd = shm_open(TRAIN_SHARED_NAME, O_CREAT | O_TRUNC | O_RDWR, S_IRUSR | S_IWUSR);
 	ftruncate(fd, sizeof(shared_data_trains));
 	data_trains = (shared_data_trains*) mmap(0, sizeof(shared_data_trains), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
