@@ -13,7 +13,6 @@
 #define EXE_INFO_PATH "/proc/self/exe"
 #define TRAIN_PROCESS_NAME "train"
 #define NUMBER_OF_MA 16
-#define NUMBER_OF_TRAINS 5
 #define ETCS1 "ETCS1"
 #define	ETCS2 "ETCS2"
 #define RBC	"RBC"

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/mman.h>
 #include "route.h"
 #include "common.h"
 #include "log.h"
@@ -16,19 +17,25 @@ static int id;
 static Node *current;
 static request_mode requestMode;
 extern char *exeDirPath;
+static shared_data_trains *data_trains;
 
+static void setUpSharedVariable();
 static void setUpExeDirPath(char *exePath);
 static Node *readAndDecodeRoute();
 static int requestModeEtcs1(int, int, int);
 static int requestModeEtcs2(int, int, int);
 static int checkMAxFile(int id);
 static void startTravel();
+static void waitOtherTrains();
+static void eLUltimoChiudaLaPorta();
+static void travelCompleted();
 static char readOneByte(char *);
 static void writeOneByte(int, char *);
-int lockExclusiveFile(char *);
+static int lockExclusiveFile(char *);
 static int move(int, int);
+static void cleanUpSharedVariable();
 
-flock writeLock = {
+static struct flock writeLock = {
 	.l_type = F_WRLCK,
 	.l_whence = SEEK_SET,
 	.l_start = 0,
@@ -36,12 +43,25 @@ flock writeLock = {
 };
 
 int main(int argc, char *argv[]) {
+	setUpSharedVariable();
 	setUpExeDirPath(argv[0]);
 	id = toInt(argv[1]);
 	requestMode = (strcmp(argv[2], "ETCS1") == 0) ? requestModeEtcs1 : requestModeEtcs2;
 	current = readAndDecodeRoute();
 	startTravel();
+	cleanUpSharedVariable();
 	return 0;
+}
+
+void setUpSharedVariable() {
+	int fd = shm_open(TRAIN_SHARED_NAME, O_RDWR, S_IRUSR | S_IWUSR);
+	data_trains = (shared_data_trains*) mmap(0, sizeof(shared_data_trains), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	close(fd);
+}
+
+void cleanUpSharedVariable() {
+	munmap(data_trains, sizeof(shared_data_trains));
+	shm_unlink(TRAIN_SHARED_NAME);
 }
 
 void setUpExeDirPath(char *exePath) {
@@ -78,9 +98,10 @@ int requestModeEtcs2(int train, int curr, int next) {
 }
 
 void startTravel() {
+	int count = 0;
 	do {
-		// TODO aspettare gli altri treni
-		printf("nuovo giro %d\n", id);
+		waitOtherTrains();
+		printf("giro numero %d\n", count++);
 		logTrain(id, current -> id, current -> next -> id);
 		if (requestModeEtcs1(id, current -> id, current -> next -> id)) {
 			if (move(current -> id, current -> next -> id)) {
@@ -90,6 +111,40 @@ void startTravel() {
 		sleep(SLEEP_TIME);
 	} while (current -> id > 0);
 	logTrain(id, current -> id, 0);
+	travelCompleted();
+	printf("terminato treno %d\n", id);
+}
+
+void waitOtherTrains() {
+	pthread_mutex_lock(&data_trains -> mutex);
+	int numTrains = data_trains -> waiting + data_trains -> completed;
+	printf("numTrains in waitOtherTrains %d\n", numTrains);
+	if (numTrains != NUMBER_OF_TRAINS - 1) {
+		printf("%s\n", "manca ancora qualcuno");
+		data_trains -> waiting++;
+		pthread_cond_wait(&data_trains -> condvar, &data_trains -> mutex);
+	} else if (numTrains == NUMBER_OF_TRAINS - 1) {
+		printf("%s\n", "ci siamo tutti");
+		eLUltimoChiudaLaPorta();
+	}
+	pthread_mutex_unlock(&data_trains -> mutex);
+}
+
+void eLUltimoChiudaLaPorta() {
+	data_trains -> waiting = 0;
+	pthread_cond_broadcast(&data_trains -> condvar);
+}
+
+void travelCompleted() {
+	pthread_mutex_lock(&data_trains->mutex);
+	data_trains -> completed++;
+	int numTrains = data_trains -> waiting + data_trains -> completed;
+	printf("numTrains in travelCompleted %d\n", numTrains);
+	if (numTrains == NUMBER_OF_TRAINS) {
+		printf("%s\n", "ci siamo tutti");
+		eLUltimoChiudaLaPorta();
+	}
+	pthread_mutex_unlock(&data_trains -> mutex);
 }
 
 char readOneByte(char *path) {

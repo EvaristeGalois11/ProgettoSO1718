@@ -9,6 +9,7 @@
 #define LOG_RBC_FILE_PREFIX "/RBC"
 #define LOG_EXTENSION ".log"
 #define TRAIN_SHARED_NAME "/traindata"
+#define NUMBER_OF_TRAINS 5
 
 typedef struct shared_data_trains {
 	pthread_mutex_t mutex;
