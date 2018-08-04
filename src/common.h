@@ -10,6 +10,8 @@
 #define LOG_EXTENSION ".log"
 #define TRAIN_SHARED_NAME "/traindata"
 #define NUMBER_OF_TRAINS 5
+#define ETCS1 "ETCS1"
+#define	ETCS2 "ETCS2"
 
 typedef struct shared_data_trains {
 	pthread_mutex_t mutex;

@@ -13,11 +13,13 @@
 typedef int (*request_mode)(int, int, int);
 typedef struct flock flock;
 
-static int id;
+static int trainId;
 static Node *current;
 static request_mode requestMode;
 extern char *exeDirPath;
 static shared_data_trains *data_trains;
+static int currDescriptor = -1;
+static int nextDescriptor = -1;
 
 static void setUpSharedVariable();
 static void setUpExeDirPath(char *exePath);
@@ -29,10 +31,10 @@ static void startTravel();
 static void waitOtherTrains();
 static void eLUltimoChiudaLaPorta();
 static void travelCompleted();
-static char readOneByte(char *);
 static void writeOneByte(int, char *);
-static int lockExclusiveFile(char *);
-static int move(int, int);
+static void lockExclusiveMA(int, int *);
+static void unlockFile(int *);
+static void move();
 static void cleanUpSharedVariable();
 
 static struct flock writeLock = {
@@ -45,8 +47,8 @@ static struct flock writeLock = {
 int main(int argc, char *argv[]) {
 	setUpSharedVariable();
 	setUpExeDirPath(argv[0]);
-	id = toInt(argv[1]);
-	requestMode = (strcmp(argv[2], "ETCS1") == 0) ? requestModeEtcs1 : requestModeEtcs2;
+	trainId = toInt(argv[1]);
+	requestMode = (strcmp(argv[2], ETCS1) == 0) ? requestModeEtcs1 : requestModeEtcs2;
 	current = readAndDecodeRoute();
 	startTravel();
 	cleanUpSharedVariable();
@@ -71,13 +73,14 @@ void setUpExeDirPath(char *exePath) {
 }
 
 Node *readAndDecodeRoute() {
-	char *path = buildPathRouteFile(id);
+	char *path = buildPathRouteFile(trainId);
 	Node *result = generateRoute(path);
 	free(path);
 	return result;
 }
 
 int requestModeEtcs1(int train, int curr, int next) {
+	printf("Treno %d: richiesta autorizzazione file MA%d\n", trainId, next);
 	if (next <= 0) {
 		return 1;
 	} else {
@@ -86,45 +89,52 @@ int requestModeEtcs1(int train, int curr, int next) {
 }
 
 int checkMAxFile(int id) {
-	char *path = buildPathMAxFile(id);
-	char byte = readOneByte(path);
-	free(path);
+	lockExclusiveMA(id, &nextDescriptor);
+	printf("Treno %d: Inizio lettura file: MA%d\n", trainId, id);
+	char byte;
+	pread(nextDescriptor, &byte, 1, 0);
+	printf("Treno %d: Fine lettura file: MA%d\n", trainId, id);
+	printf("Treno %d: letto byte %c\n", trainId, byte);
 	return (byte == '0');
 }
 
 int requestModeEtcs2(int train, int curr, int next) {
 	// TODO implementare richiesta al server RBC
-	return 0;
+	return 1;
 }
 
 void startTravel() {
 	int count = 0;
 	do {
 		waitOtherTrains();
-		printf("giro numero %d\n", count++);
-		logTrain(id, current -> id, current -> next -> id);
-		if (requestModeEtcs1(id, current -> id, current -> next -> id)) {
-			if (move(current -> id, current -> next -> id)) {
-				current = current -> next;
-			}
+		lockExclusiveMA(current -> id, &currDescriptor);
+		waitOtherTrains();
+		printf("Treno %d: giro numero %d\n", trainId, ++count);
+		logTrain(trainId, current -> id, current -> next -> id);
+		if (requestModeEtcs1(trainId, current -> id, current -> next -> id)) {
+			move();
+			current = current -> next;
 		}
+		unlockFile(&currDescriptor);
+		unlockFile(&nextDescriptor);
+		printf("Treno %d: giro %d terminato\n", trainId, count);
 		sleep(SLEEP_TIME);
 	} while (current -> id > 0);
-	logTrain(id, current -> id, 0);
+	logTrain(trainId, current -> id, 0);
 	travelCompleted();
-	printf("terminato treno %d\n", id);
+	printf("Treno %d: terminato\n", trainId);
 }
 
 void waitOtherTrains() {
 	pthread_mutex_lock(&data_trains -> mutex);
 	int numTrains = data_trains -> waiting + data_trains -> completed;
-	printf("numTrains in waitOtherTrains %d\n", numTrains);
+	printf("Treno %d: numTrains in waitOtherTrains %d\n", trainId, numTrains);
 	if (numTrains != NUMBER_OF_TRAINS - 1) {
-		printf("%s\n", "manca ancora qualcuno");
+		printf("Treno %d: manca ancora qualcuno\n", trainId);
 		data_trains -> waiting++;
 		pthread_cond_wait(&data_trains -> condvar, &data_trains -> mutex);
 	} else if (numTrains == NUMBER_OF_TRAINS - 1) {
-		printf("%s\n", "ci siamo tutti");
+		printf("Treno %d: ci siamo tutti\n", numTrains);
 		eLUltimoChiudaLaPorta();
 	}
 	pthread_mutex_unlock(&data_trains -> mutex);
@@ -139,71 +149,49 @@ void travelCompleted() {
 	pthread_mutex_lock(&data_trains->mutex);
 	data_trains -> completed++;
 	int numTrains = data_trains -> waiting + data_trains -> completed;
-	printf("numTrains in travelCompleted %d\n", numTrains);
+	printf("Treno %d: numTrains in travelCompleted %d\n", trainId, numTrains);
 	if (numTrains == NUMBER_OF_TRAINS) {
-		printf("%s\n", "ci siamo tutti");
+		printf("Treno %d: %s\n", trainId, "ci siamo tutti");
 		eLUltimoChiudaLaPorta();
 	}
 	pthread_mutex_unlock(&data_trains -> mutex);
 }
 
-char readOneByte(char *path) {
-	int descriptor;
-	if ((descriptor = lockExclusiveFile(path)) == -1) {
-		return '1';
+void lockExclusiveMA(int maId, int *descriptor) {
+	if (maId > 0) {
+		char *path = buildPathMAxFile(maId);
+		int d = open(path, O_RDWR);
+		printf("Treno %d: richiesto lock file MA%d\n", trainId, maId);
+		fcntl (d, F_SETLKW, &writeLock);
+		printf("Treno %d: ottenuto lock file MA%d\n", trainId, maId);
+		free(path);
+		*descriptor = d;
 	}
-	printf("Treno: %d - Inizio lettura file: %s\n", id, path);
-	char byte[1];
-	read(descriptor, byte, 1);
-	printf("Treno: %d - Fine lettura file: %s\n", id, path);
-	close(descriptor);
-	return byte[0];
+}
+
+void unlockFile(int *descriptor) {
+	if (*descriptor != -1) {
+		close(*descriptor);
+		printf("Treno %d: chiusura lock di un file\n", trainId);
+	}
+	*descriptor = -1;
+}
+
+void move() {
+	if (currDescriptor != -1) {
+		printf("Treno %d: Inizio scrittura file MA%d\n", trainId, (current -> id));
+		writeOneByte(currDescriptor, "0");
+		printf("Treno %d: Fine scrittura file MA%d\n", trainId, (current -> id));
+	}
+	if (nextDescriptor != -1) {
+		printf("Treno %d: Inizio scrittura file MA%d\n", trainId, (current -> next -> id));
+		writeOneByte(nextDescriptor, "1");
+		printf("Treno %d: Fine scrittura file MA%d\n", trainId, (current -> next -> id));
+	}
 }
 
 void writeOneByte(int descriptor, char *byte) {
-	write(descriptor, byte, 1);
+	pwrite(descriptor, byte, 1, 0);
 	fsync(descriptor);
-	close(descriptor);
-}
-
-int lockExclusiveFile(char *path) {
-	int descriptor = open(path, O_RDWR);
-	if ((fcntl (descriptor, F_SETLK, &writeLock) == -1)) {
-		printf("Treno: %d - Impossibile lock file: %s\n", id, path);
-		return -1;
-	}
-	return descriptor;
-}
-
-int move(int curr, int next) {
-	char *currPath = buildPathMAxFile(curr);
-	char *nextPath = buildPathMAxFile(next);
-
-	int descriptor1 = (currPath == NULL) ? 0 : lockExclusiveFile(currPath);
-	int descriptor2 = (nextPath == NULL) ? 0 : lockExclusiveFile(nextPath);
-
-	if (descriptor1 < 0 || descriptor2 < 0) {
-		if (currPath != NULL && descriptor1 > 0) {
-			close(descriptor1);
-		}
-		if (nextPath != NULL && descriptor2 > 0) {
-			close(descriptor2);
-		}
-		return 0;
-	}
-
-	if (currPath != NULL) {
-		printf("Treno: %d - Inizio scrittura file: %s\n", id, currPath);
-		writeOneByte(descriptor1, "0");
-		printf("Treno: %d - Fine scrittura file: %s\n", id, currPath);
-		free(currPath);
-	}
-	if (nextPath != NULL) {
-		printf("Treno: %d - Inizio scrittura file: %s\n", id, nextPath);
-		writeOneByte(descriptor2, "1");
-		printf("Treno: %d - Fine scrittura file: %s\n", id, nextPath);
-		free(nextPath);
-	}
-	return 1;
 }
 
