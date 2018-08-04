@@ -1,48 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include "route.h"
-#include "common.h"
-#include "log.h"
-
-#define SLEEP_TIME 3
-
-typedef int (*request_mode)(int, int, int);
-typedef struct flock flock;
-
-static int trainId;
-static Node *current;
-static request_mode requestMode;
-extern char *exeDirPath;
-static shared_data_trains *data_trains;
-static int currDescriptor = -1;
-static int nextDescriptor = -1;
-
-static void setUpSharedVariable();
-static void setUpExeDirPath(char *exePath);
-static Node *readAndDecodeRoute();
-static int requestModeEtcs1(int, int, int);
-static int requestModeEtcs2(int, int, int);
-static int checkMAxFile(int id);
-static void startTravel();
-static void waitOtherTrains();
-static void eLUltimoChiudaLaPorta();
-static void travelCompleted();
-static void writeOneByte(int, char *);
-static void lockExclusiveMA(int, int *);
-static void unlockFile(int *);
-static void move();
-static void cleanUpSharedVariable();
-
-static struct flock writeLock = {
-	.l_type = F_WRLCK,
-	.l_whence = SEEK_SET,
-	.l_start = 0,
-	.l_len = 1,
-};
+#include "train.h"
 
 int main(int argc, char *argv[]) {
 	setUpSharedVariable();
@@ -51,6 +7,7 @@ int main(int argc, char *argv[]) {
 	requestMode = (strcmp(argv[2], ETCS1) == 0) ? requestModeEtcs1 : requestModeEtcs2;
 	current = readAndDecodeRoute();
 	startTravel();
+	free(exeDirPath);
 	cleanUpSharedVariable();
 	return 0;
 }

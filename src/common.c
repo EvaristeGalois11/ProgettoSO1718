@@ -5,9 +5,7 @@
 #include <stdarg.h>
 #include "common.h"
 
-char *exeDirPath;
-
-int countDigits(int n) {
+int countDigits(int n) { // inutile più avanti
 	if (n == 0) {
 		return 1;
 	} else {

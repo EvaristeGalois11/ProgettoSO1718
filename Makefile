@@ -15,13 +15,13 @@ rbc: $(BIN)/rbc
 $(BIN)/ertms: $(BIN)/ertms.o $(BIN)/common.o
 	gcc $(OPTIMIZATION) $(BIN)/ertms.o $(BIN)/common.o -o $(BIN)/ertms -lm -lrt -lpthread 
 
-$(BIN)/ertms.o: $(SRC)/ertms.c
+$(BIN)/ertms.o: $(SRC)/ertms.c $(SRC)/ertms.h
 	gcc $(OPTIMIZATION) -c $(SRC)/ertms.c -o $(BIN)/ertms.o
 
 $(BIN)/train: $(BIN)/train.o $(BIN)/route.o $(BIN)/log.o $(BIN)/common.o
 	gcc $(OPTIMIZATION) $(BIN)/train.o $(BIN)/route.o $(BIN)/log.o $(BIN)/common.o -o $(BIN)/train -lm -lrt -lpthread 
 
-$(BIN)/train.o: $(SRC)/train.c
+$(BIN)/train.o: $(SRC)/train.c $(SRC)/train.h
 	gcc $(OPTIMIZATION) -c $(SRC)/train.c -o $(BIN)/train.o
 
 $(BIN)/rbc: $(BIN)/rbc.o $(BIN)/route.o $(BIN)/common.o

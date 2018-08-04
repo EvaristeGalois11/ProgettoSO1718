@@ -1,32 +1,4 @@
-#include <stdio.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <sys/mman.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-#include "common.h"
-
-#define EXE_INFO_PATH "/proc/self/exe"
-#define TRAIN_PROCESS_NAME "train"
-#define NUMBER_OF_MA 16
-#define RBC	"RBC"
-
-static char *getExePath();
-static void createDirIfNotExist(char *);
-static void createMAxFiles(int);
-static pid_t *startTrains(int, char *);
-static void waitTrainsTermination(int);
-static void launchETSC(char*);
-static void launchRBC();
-static void setUpSharedVariableForTrains();
-static void cleanUpSharedVariableForTrains();
-
-extern char *exeDirPath;
-shared_data_trains *data_trains;
+#include "ertms.h"
 
 int main(int argc, char *argv[]) {
 	exeDirPath = truncExeName(getExePath());

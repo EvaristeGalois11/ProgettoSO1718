@@ -20,6 +20,8 @@ typedef struct shared_data_trains {
 	int completed;
 } shared_data_trains;
 
+char *exeDirPath;
+
 int countDigits(int);
 int toInt(char *);
 char *truncExeName(char *);
