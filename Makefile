@@ -27,7 +27,7 @@ $(BIN)/train.o: $(SRC)/train.c $(SRC)/train.h
 $(BIN)/rbc: $(BIN)/rbc.o $(BIN)/route.o $(BIN)/common.o
 	gcc $(OPTIMIZATION) $(BIN)/rbc.o $(BIN)/route.o $(BIN)/common.o -o $(BIN)/rbc
 
-$(BIN)/rbc.o: $(SRC)/rbc.c
+$(BIN)/rbc.o: $(SRC)/rbc.c $(SRC)/rbc.h
 	gcc $(OPTIMIZATION) -c $(SRC)/rbc.c -o $(BIN)/rbc.o
 
 $(BIN)/route.o: $(SRC)/route.c $(SRC)/route.h

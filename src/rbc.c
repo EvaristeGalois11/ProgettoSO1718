@@ -1,16 +1,24 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include "route.h"
-#include "common.h"
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/types.h>
-#include <unistd.h> //unlink()
+#include "rbc.h"
 
-Node **importaPercorsiTreni(char[]);
-void creaServer();
+int main(int argc, char *argv[]) {
+	bool ma[16] = {0};	// TODO decidere come passare numero 16 di segmenti
+	
+	setUpFileServerName(argv[0]);
+	unlink(exeDirPath);
+	int serverFd = make_name_socket(exeDirPath);
+	listen(serverFd,NUMBER_OF_TRAINS);
+	while (1) {
+		return 0;
+	}
 
+	return 0;
+}
+
+void setUpFileServerName(char *exePath){
+	truncExeName(exePath);
+	exeDirPath=csprintf("%s%s%s",exePath,FILE_SERVER_PATH,FILE_SERVER_NAME);
+
+}
 int make_name_socket(const char *filename) {
 	struct sockaddr_un name;
 	int sock;
@@ -26,28 +34,4 @@ int make_name_socket(const char *filename) {
 		exit (EXIT_FAILURE);
 	}
 	return sock;
-}
-int main(int argc, char *argv[]) {
-	bool ma[16] = {0};	// TODO decidere come passare numero 16 di segmenti
-	Node **percorsiTreni;
-	percorsiTreni = importaPercorsiTreni(argv[1]);
-
-	creaServer();
-	unlink("./serverFdFile");
-	int serverFd = make_name_socket("./serverFdFile");
-	listen(serverFd,NUMBER_OF_TRAINS);
-	while (1) {
-		return 0;
-	}
-
-	return 0;
-}
-
-Node** importaPercorsiTreni(char argv[]) {
-	// TODO incrociare i flussi stream come i ghostbusters
-	return NULL;
-}
-
-void creaServer() {
-	return;
 }

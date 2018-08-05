@@ -15,6 +15,8 @@
 #define LOG_RBC_FILE_PREFIX "/RBC"
 #define LOG_EXTENSION ".log"
 #define TRAIN_SHARED_NAME "/traindata"
+#define FILE_SERVER_PATH "../resources"
+#define FILE_SERVER_NAME "/rbcSockets"
 #define NUMBER_OF_TRAINS 5
 #define NUMBER_OF_MA 16
 #define ETCS1 "ETCS1"
