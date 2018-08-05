@@ -1,3 +1,5 @@
+#ifndef ERTMS_H
+#define ERTMS_H
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/types.h>
@@ -12,18 +14,18 @@
 
 #define EXE_INFO_PATH "/proc/self/exe"
 #define TRAIN_PROCESS_NAME "train"
-#define NUMBER_OF_MA 16
-#define RBC	"RBC"
 
-char *getExePath();
+int main(int, char **);
+char *getExePath(void);
+void setUpSharedVariableForTrains(void);
+void cleanUpSharedVariableForTrains(void);
 void createDirIfNotExist(char *);
-void createMAxFiles(int);
-pid_t *startTrains(int, char *);
-void waitTrainsTermination(int);
+void createMAxFiles(void);
+void startTrains(char *);
+void waitTrainsTermination(void);
 void launchETSC(char*);
-void launchRBC();
-void setUpSharedVariableForTrains();
-void cleanUpSharedVariableForTrains();
+void launchRBC(void);
 
 extern char *exeDirPath;
-shared_data_trains *data_trains;
+shared_data_trains *dataTrains;
+#endif

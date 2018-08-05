@@ -1,3 +1,9 @@
+#ifndef COMMON_H
+#define COMMON_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
 #include <pthread.h>
 
 #define MAX_DIR_PATH "../resources/MAx"
@@ -10,8 +16,10 @@
 #define LOG_EXTENSION ".log"
 #define TRAIN_SHARED_NAME "/traindata"
 #define NUMBER_OF_TRAINS 5
+#define NUMBER_OF_MA 16
 #define ETCS1 "ETCS1"
 #define	ETCS2 "ETCS2"
+#define RBC	"RBC"
 
 typedef struct shared_data_trains {
 	pthread_mutex_t mutex;
@@ -22,11 +30,10 @@ typedef struct shared_data_trains {
 
 char *exeDirPath;
 
-int countDigits(int);
-int toInt(char *);
 char *truncExeName(char *);
 char *buildPathMAxFile(int);
 char *buildPathRouteFile(int);
 char *buildPathTrainLogFile(int);
-char *buildPathRbcLogFile();
+char *buildPathRbcLogFile(void);
 char *csprintf(const char *, ...);
+#endif

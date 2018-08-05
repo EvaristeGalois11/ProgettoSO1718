@@ -1,24 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
-#include <time.h>
-#include <locale.h>
 #include "log.h"
-#include "common.h"
-#include "route.h"
-
-#define LOG_TRAIN_TEMPLATE "[Attuale: %s], [Next: %s], %s\n"
-#define LOG_RBC_TEMPLATE "[TRENO RICHIEDENTE AUTORIZZAZIONE: T%d], [SEGMENTO ATTUALE: %s], [SEGMENTO RICHIESTO: %s], [AUTORIZZATO: %s], [DATA: %s]\n"
-#define TIME_TEMPLATE "%d %B %Y %H:%M:%S"
-#define TIME_BUFFER_LENGTH 30
-
-static char *getLogMessage(int, int, int, char *, int);
-static void formatTime();
-static void logOnFile(char *, char *);
-
-static char timeBuffer[TIME_BUFFER_LENGTH];
 
 void logTrain(int train, int curr, int next) {
 	char *path = buildPathTrainLogFile(train);
@@ -43,9 +23,7 @@ char *getLogMessage(int train, int curr, int next, char *response, int isTrain) 
 		log = csprintf(LOG_RBC_TEMPLATE, train, currName, nextName, response, timeBuffer);
 	}
 	free(currName);
-	if (strcmp(nextName, UNFREEABLE_STRING) != 0) {
-		free(nextName);
-	}
+	free(nextName);
 	return log;
 }
 
