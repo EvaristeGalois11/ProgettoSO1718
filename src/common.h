@@ -5,6 +5,10 @@
 #include <string.h>
 #include <stdarg.h>
 #include <pthread.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #define MAX_DIR_PATH "../resources/MAx"
 #define MA_FILE_PREFIX "/MA"
@@ -43,4 +47,6 @@ char *buildPathRouteFile(int);
 char *buildPathTrainLogFile(int);
 char *buildPathRbcLogFile(void);
 char *csprintf(const char *, ...);
+void setUpExeDirPath(char *exePath);
+void createDirIfNotExist(char *);
 #endif

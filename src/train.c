@@ -25,11 +25,6 @@ void cleanUp(void) {
 	shm_unlink(TRAIN_SHARED_NAME);
 }
 
-void setUpExeDirPath(char *exePath) {
-	exeDirPath = csprintf("%s", exePath);
-	truncExeName(exeDirPath);
-}
-
 Node *readAndDecodeRoute(void) {
 	char *path = buildPathRouteFile(trainId);
 	Node *result = generateRoute(path);

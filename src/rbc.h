@@ -10,5 +10,4 @@
 #include "common.h"
 
 int make_name_socket(const char*);
-void setUpFileServerName(char*);
 #endif

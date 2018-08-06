@@ -93,15 +93,6 @@ void cleanUpSharedVariableForRbc(void) {
 	shm_unlink(RBC_SHARED_NAME);
 }
 
-void createDirIfNotExist(char *dir) {
-	char *pathDir = csprintf("%s%s", exeDirPath, dir);
-	struct stat st;
-	if (stat(pathDir, &st) == -1) {
-		mkdir(pathDir, 0777);
-	}
-	free(pathDir);
-}
-
 void createMAxFiles() {
 	for (int i = 1; i < NUMBER_OF_MA + 1; i++) {
 		char *path = buildPathMAxFile(i);

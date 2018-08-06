@@ -17,7 +17,6 @@ typedef int (*request_mode)(int, int, int);
 int main(int, char **);
 void setUpSharedVariable(void);
 void cleanUp(void);
-void setUpExeDirPath(char *exePath);
 Node *readAndDecodeRoute(void);
 int requestModeEtcs1(int, int, int);
 int checkMAxFile(int id);

@@ -42,3 +42,17 @@ char *csprintf(const char *format, ...) {
 	va_end(arglist2);
 	return string;
 }
+
+void setUpExeDirPath(char *exePath) {
+	exeDirPath = csprintf("%s", exePath);
+	truncExeName(exeDirPath);
+}
+
+void createDirIfNotExist(char *dir) {
+	char *pathDir = csprintf("%s%s", exeDirPath, dir);
+	struct stat st;
+	if (stat(pathDir, &st) == -1) {
+		mkdir(pathDir, 0777);
+	}
+	free(pathDir);
+}
