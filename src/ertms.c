@@ -7,11 +7,11 @@ int main(int argc, char *argv[]) {
 		createDirIfNotExist(MAX_DIR_PATH);
 		createDirIfNotExist(LOG_DIR_PATH);
 		createMAxFiles();
-		launchETSC(argv[1]);
+		launchEtsc(argv[1]);
 		free(exeDirPath);
 		umask(previousMask);
 	} else if (argc == 3 && strcasecmp(argv[1], ETCS2) == 0 && strcasecmp(argv[2], RBC) == 0) {
-		launchRBC();
+		launchRbc();
 	} else {
 		printf("Invalid argument\n");
 	}
@@ -31,7 +31,7 @@ char *getExePath(void) {
 	return buffer;
 }
 
-void launchETSC(char *mode) {
+void launchEtsc(char *mode) {
 	setUpSharedVariableForTrains();
 	startTrains(mode);
 	waitTrainsTermination();
@@ -62,8 +62,35 @@ void cleanUpSharedVariableForTrains(void) {
 	shm_unlink(TRAIN_SHARED_NAME);
 }
 
-void launchRBC(void) {
-	// TODO implementare avvio RBC
+void launchRbc(void) {
+	setUpSharedVariableForRbc();
+	startRbc();
+	int status;
+	int pid = wait(&status);
+	printf("Child with PID %ld exited with status 0x%x\n", (long) pid, status);
+	cleanUpSharedVariableForRbc();
+}
+
+void setUpSharedVariableForRbc(void) {
+	int fd = shm_open(RBC_SHARED_NAME, O_CREAT | O_TRUNC | O_RDWR, 0700);
+	ftruncate(fd, sizeof(shared_data_rbc));
+	dataRbc = (shared_data_rbc*) mmap(0, sizeof(shared_data_rbc), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	pthread_mutexattr_t mutex_attr;
+	pthread_mutexattr_init(&mutex_attr);
+	pthread_mutexattr_setpshared(&mutex_attr, PTHREAD_PROCESS_SHARED);
+	for (int i = 0; i < NUMBER_OF_MA; i++) {
+		pthread_mutex_init(&dataRbc -> mutexes[i], &mutex_attr);
+	}
+	pthread_mutexattr_destroy(&mutex_attr);
+	close(fd);
+}
+
+void cleanUpSharedVariableForRbc(void) {
+	for (int i = 0; i < NUMBER_OF_MA; i++) {
+		pthread_mutex_destroy(&dataRbc -> mutexes[i]);
+	}
+	munmap(dataRbc, sizeof(shared_data_rbc));
+	shm_unlink(RBC_SHARED_NAME);
 }
 
 void createDirIfNotExist(char *dir) {
@@ -95,6 +122,10 @@ void startTrains(char *mode) {
 			exit(EXIT_FAILURE);
 		}
 	}
+}
+
+void startRbc(void) {
+	// TODO avviare rbc
 }
 
 void waitTrainsTermination() {

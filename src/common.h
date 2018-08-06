@@ -17,6 +17,7 @@
 #define TRAIN_SHARED_NAME "/traindata"
 #define FILE_SERVER_PATH "../resources"
 #define FILE_SERVER_NAME "/rbcSockets"
+#define RBC_SHARED_NAME "/rbcdata"
 #define NUMBER_OF_TRAINS 5
 #define NUMBER_OF_MA 16
 #define ETCS1 "ETCS1"
@@ -29,6 +30,10 @@ typedef struct shared_data_trains {
 	int waiting;
 	int completed;
 } shared_data_trains;
+
+typedef struct shared_data_rbc {
+	pthread_mutex_t mutexes[NUMBER_OF_MA];
+} shared_data_rbc;
 
 char *exeDirPath;
 

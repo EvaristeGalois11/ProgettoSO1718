@@ -36,6 +36,7 @@ char *readLine(char *path) {
 		buffer = realloc(buffer, MAX + 1);
 	}
 	buffer[length] = '\0';
+	fclose(file);
 	return buffer;
 }
 
