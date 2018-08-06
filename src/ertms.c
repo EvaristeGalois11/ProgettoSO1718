@@ -125,7 +125,10 @@ void startTrains(char *mode) {
 }
 
 void startRbc(void) {
-	// TODO avviare rbc
+	char *pathRbc = csprintf("%s%s", exeDirPath, RBC_PROCESS_NAME);
+	execl(pathRbc, pathRbc, NULL);
+	perror("Rbc not started");
+	exit(EXIT_FAILURE);
 }
 
 void waitTrainsTermination() {

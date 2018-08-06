@@ -14,9 +14,9 @@
 #define LOG_TRAIN_FILE_PREFIX "/T"
 #define LOG_RBC_FILE_PREFIX "/RBC"
 #define LOG_EXTENSION ".log"
+#define SOCKET_DIR_PATH "../resources/server"
+#define SOCKET_FILE_NAME "/socket"
 #define TRAIN_SHARED_NAME "/traindata"
-#define FILE_SERVER_PATH "../resources"
-#define FILE_SERVER_NAME "/rbcSockets"
 #define RBC_SHARED_NAME "/rbcdata"
 #define NUMBER_OF_TRAINS 5
 #define NUMBER_OF_MA 16

@@ -14,6 +14,7 @@
 
 #define EXE_INFO_PATH "/proc/self/exe"
 #define TRAIN_PROCESS_NAME "train"
+#define RBC_PROCESS_NAME "rbc"
 
 int main(int, char **);
 char *getExePath(void);
