@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #define MAX_DIR_PATH "../resources/MAx"
@@ -41,12 +42,13 @@ typedef struct shared_data_rbc {
 
 char *exeDirPath;
 
-char *truncExeName(char *);
 char *buildPathMAxFile(int);
 char *buildPathRouteFile(int);
 char *buildPathTrainLogFile(int);
 char *buildPathRbcLogFile(void);
 char *csprintf(const char *, ...);
 void setUpExeDirPath(char *exePath);
+char *truncExeName(char *);
 void createDirIfNotExist(char *);
+void waitChildrenTermination(int);
 #endif

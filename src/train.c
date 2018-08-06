@@ -4,25 +4,53 @@ int main(int argc, char *argv[]) {
 	setUpSharedVariable();
 	setUpExeDirPath(argv[0]);
 	sscanf(argv[1], "%d", &trainId);
-	requestMode = (strcasecmp(argv[2], ETCS1) == 0) ? requestModeEtcs1 : requestModeEtcs2;
+	int isEtcs1 = (strcasecmp(argv[2], ETCS1) == 0);
+	requestMode = isEtcs1 ? requestModeEtcs1 : requestModeEtcs2;
+	lockMode = isEtcs1 ? lockExclusiveMA : notifyPosition;
+	if (!isEtcs1) {
+		connectToSocket();
+	}
 	start = readAndDecodeRoute();
 	current = start;
-	startTravel();
+	// startTravel();
 	cleanUp();
 	return 0;
 }
 
 void setUpSharedVariable(void) {
-	int fd = shm_open(TRAIN_SHARED_NAME, O_RDWR, S_IRUSR | S_IWUSR);
-	data_trains = (shared_data_trains*) mmap(0, sizeof(shared_data_trains), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	int fd = shm_open(TRAIN_SHARED_NAME, O_RDWR, 0700);
+	data_trains = (shared_data_trains *) mmap(0, sizeof(shared_data_trains), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	close(fd);
 }
 
 void cleanUp(void) {
 	free(exeDirPath);
 	destroyRoute(start);
+	close(clientFd);
 	munmap(data_trains, sizeof(shared_data_trains));
 	shm_unlink(TRAIN_SHARED_NAME);
+}
+
+void connectToSocket(void) {
+	struct sockaddr_un name;
+	clientFd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (clientFd < 0) {
+		perror("Impossible to obtain an anonymous socket");
+		exit(EXIT_FAILURE);
+	}
+	name.sun_family = AF_UNIX;
+	char *socketAddr = csprintf("%s%s%s", exeDirPath, SOCKET_DIR_PATH, SOCKET_FILE_NAME);
+	strcpy(name.sun_path, socketAddr);
+	int result;
+	do {
+		result = connect(clientFd, (struct sockaddr *) &name, sizeof(name));
+		if (result == -1) {
+			sleep(SLEEP_TIME);
+		}
+	} while (result == -1);
+	printf("%s\n", "connessi!");
+	sleep(10);
+	write(clientFd, "messaggiostandard", 20);
 }
 
 Node *readAndDecodeRoute(void) {
@@ -60,7 +88,7 @@ void startTravel(void) {
 	int count = 0;
 	do {
 		waitOtherTrains();
-		lockExclusiveMA(current -> id, &currDescriptor);
+		lockMode(current -> id, &currDescriptor);
 		waitOtherTrains();
 		printf("Treno %d: giro numero %d\n", trainId, ++count);
 		logTrain(trainId, current -> id, current -> next -> id);
@@ -72,7 +100,7 @@ void startTravel(void) {
 		unlockFile(&nextDescriptor);
 		printf("Treno %d: giro %d terminato\n", trainId, count);
 		sleep(SLEEP_TIME);
-	} while (current -> id > 0);
+	} while (current -> id > 0 && current -> id != start -> id);
 	logTrain(trainId, current -> id, 0);
 	travelCompleted();
 	printf("Treno %d: terminato\n", trainId);
@@ -128,6 +156,10 @@ void unlockFile(int *descriptor) {
 	*descriptor = -1;
 }
 
+void notifyPosition(int maId, int *descriptor) {
+	// TODO notificare posizione corrente
+}
+
 void move(void) {
 	if (currDescriptor != -1) {
 		printf("Treno %d: Inizio scrittura file MA%d\n", trainId, (current -> id));
@@ -145,4 +177,3 @@ void writeOneByte(int descriptor, char *byte) {
 	pwrite(descriptor, byte, 1, 0);
 	fsync(descriptor);
 }
-

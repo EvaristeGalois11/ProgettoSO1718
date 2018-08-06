@@ -1,16 +1,5 @@
 #include "common.h"
 
-char *truncExeName(char *exePath) {
-	char *lastOccurance = NULL;
-	char *temp = exePath;
-	do {
-		lastOccurance = temp;
-		temp = strstr(++lastOccurance, "/");
-	} while (temp != NULL);
-	lastOccurance[0] = '\0';
-	return exePath;
-}
-
 char *buildPathMAxFile(int id) {
 	if (id > 0) {
 		return csprintf("%s%s%s%d", exeDirPath, MAX_DIR_PATH, MA_FILE_PREFIX, id);
@@ -48,6 +37,17 @@ void setUpExeDirPath(char *exePath) {
 	truncExeName(exeDirPath);
 }
 
+char *truncExeName(char *exePath) {
+	char *lastOccurance = NULL;
+	char *temp = exePath;
+	do {
+		lastOccurance = temp;
+		temp = strstr(++lastOccurance, "/");
+	} while (temp != NULL);
+	lastOccurance[0] = '\0';
+	return exePath;
+}
+
 void createDirIfNotExist(char *dir) {
 	char *pathDir = csprintf("%s%s", exeDirPath, dir);
 	struct stat st;
@@ -55,4 +55,13 @@ void createDirIfNotExist(char *dir) {
 		mkdir(pathDir, 0777);
 	}
 	free(pathDir);
+}
+
+void waitChildrenTermination(int numChild) {
+	int status;
+	pid_t pid;
+	for (int i = 0; i < numChild; i++) {
+		pid = wait(&status);
+		printf("Child with PID %ld exited with status 0x%x\n", (long) pid, status);
+	}
 }

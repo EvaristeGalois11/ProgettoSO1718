@@ -34,7 +34,7 @@ char *getExePath(void) {
 void launchEtsc(char *mode) {
 	setUpSharedVariableForTrains();
 	startTrains(mode);
-	waitTrainsTermination();
+	waitChildrenTermination(NUMBER_OF_TRAINS);
 	cleanUpSharedVariableForTrains();
 }
 
@@ -120,13 +120,4 @@ void startRbc(void) {
 	execl(pathRbc, pathRbc, NULL);
 	perror("Rbc not started");
 	exit(EXIT_FAILURE);
-}
-
-void waitTrainsTermination() {
-	int status;
-	pid_t pid;
-	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
-		pid = wait(&status);
-		printf("Child with PID %ld exited with status 0x%x\n", (long) pid, status);
-	}
 }

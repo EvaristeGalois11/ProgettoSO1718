@@ -1,7 +1,6 @@
 #ifndef ERTMS_H
 #define ERTMS_H
 #include <stdio.h>
-
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <string.h>
@@ -23,10 +22,9 @@ void setUpSharedVariableForRbc(void);
 void cleanUpSharedVariableForRbc(void);
 void createMAxFiles(void);
 void startTrains(char *);
-void waitTrainsTermination(void);
 void startRbc(void);
 
 extern char *exeDirPath;
 shared_data_trains *dataTrains;
-shared_data_rbc * dataRbc;
+shared_data_rbc *dataRbc;
 #endif
