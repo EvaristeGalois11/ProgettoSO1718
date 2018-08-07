@@ -4,20 +4,20 @@
 #include "ertms.h"
 
 int main(int argc, char *argv[]) {
+	mode_t previousMask = umask(0000);
 	exeDirPath = truncExeName(getExePath());
 	if (argc == 2 && (strcasecmp(argv[1], ETCS1) == 0 || strcasecmp(argv[1], ETCS2) == 0)) {
-		mode_t previousMask = umask(0000);
 		createDirIfNotExist(MAX_DIR_PATH);
 		createDirIfNotExist(LOG_DIR_PATH);
 		createMAxFiles();
 		launchEtsc(argv[1]);
-		free(exeDirPath);
-		umask(previousMask);
 	} else if (argc == 3 && strcasecmp(argv[1], ETCS2) == 0 && strcasecmp(argv[2], RBC) == 0) {
 		launchRbc();
 	} else {
 		printf("Invalid argument\n");
 	}
+	free(exeDirPath);
+	umask(previousMask);
 	return 0;
 }
 
@@ -94,10 +94,7 @@ void launchRbc(void) {
 		//SPUDORATAMENTE COPIATO DA TRAIN PER PROVARE
 	}
 	startRbc();
-
-	int status;
-	int pid = wait(&status);
-	printf("Child with PID %ld exited with status 0x%x\n", (long) pid, status);
+	waitChildrenTermination(1);
 	cleanUpSharedVariableForRbc();
 }
 

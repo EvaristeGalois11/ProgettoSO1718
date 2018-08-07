@@ -1,7 +1,6 @@
 #include "route.h"
 
-Node *generateRoute(char *path) {
-	char *line = readLine(path);
+Node *generateRoute(char *line) {
 	char *saveState;
 	char *token = strtok_r(line, CSV_SEPARATOR, &saveState);
 	Node *start = buildNode(token);
@@ -15,31 +14,29 @@ Node *generateRoute(char *path) {
 	return start;
 }
 
-char *readLine(char *path) {
-	FILE * file = fopen(path, "r");
-	int MAX = 40;
-	char *buffer = malloc(sizeof(char) * MAX);
-	int length = 0;
-	char ch = getc(file);
-	while ((ch != '\n') && (ch != EOF)) {
-		if (length == MAX) {
-			MAX *= 2;
-			buffer = realloc(buffer, MAX);
+char *readLine(int fd) {
+	int length = 50;
+	char *str = malloc(sizeof(char) * length);
+	int index = 0;
+	int n = 0;
+	char temp;
+	do {
+		if (index == length) {
+			length *= 2;
+			str = realloc(str, length);
 		}
-		if (ch != ' ') {
-			buffer[length] = ch;
-			length++;
+		n = read(fd, &temp, 1);
+		if (n == 0) {
+			return NULL;
 		}
-		ch = getc(file);
-	}
-	if (length == MAX) {
-		buffer = realloc(buffer, MAX + 1);
-	}
-	buffer[length] = '\0';
-	fclose(file);
-	return buffer;
+		if (temp != ' ') {
+			str[index++] = temp;
+		}
+	} while (temp != '\n' && temp != EOF);
+	str[--index] = '\0';
+	printf("%s\n", str);
+	return str;
 }
-
 
 Node *buildNode(char *name) {
 	Node *node = malloc(sizeof(Node));

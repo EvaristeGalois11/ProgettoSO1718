@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 
 void setUpSharedVariable(void) {
 	int fd = shm_open(TRAIN_SHARED_NAME, O_RDWR, 0700);
-	data_trains = (shared_data_trains *) mmap(0, sizeof(shared_data_trains), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	dataTrains = (shared_data_trains *) mmap(0, sizeof(shared_data_trains), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	close(fd);
 }
 
@@ -27,7 +27,7 @@ void cleanUp(void) {
 	free(exeDirPath);
 	destroyRoute(start);
 	close(clientFd);
-	munmap(data_trains, sizeof(shared_data_trains));
+	munmap(dataTrains, sizeof(shared_data_trains));
 	shm_unlink(TRAIN_SHARED_NAME);
 }
 
@@ -49,14 +49,17 @@ void connectToSocket(void) {
 		}
 	} while (result == -1);
 	printf("%s\n", "connessi!");
-	sleep(10);
-	write(clientFd, "messaggiostandard", 20);
+	sleep(1);
+	write(clientFd, "messaggiostandard\n", 20);
 }
 
 Node *readAndDecodeRoute(void) {
 	char *path = buildPathRouteFile(trainId);
-	Node *result = generateRoute(path);
+	int d = open(path, O_RDWR);
+	char *line = readLine(d);
+	Node *result = generateRoute(line);
 	free(path);
+	free(line);
 	return result;
 }
 
@@ -100,40 +103,40 @@ void startTravel(void) {
 		unlockFile(&nextDescriptor);
 		printf("Treno %d: giro %d terminato\n", trainId, count);
 		sleep(SLEEP_TIME);
-	} while (current -> id > 0 && current -> id != start -> id);
+	} while (current -> id > 0 && (current -> id != start -> id));
 	logTrain(trainId, current -> id, 0);
 	travelCompleted();
 	printf("Treno %d: terminato\n", trainId);
 }
 
 void waitOtherTrains(void) {
-	pthread_mutex_lock(&data_trains -> mutex);
-	checkOtherTrains(&data_trains -> waiting, 1);
-	pthread_mutex_unlock(&data_trains -> mutex);
+	pthread_mutex_lock(&dataTrains -> mutex);
+	checkOtherTrains(&dataTrains -> waiting, 1);
+	pthread_mutex_unlock(&dataTrains -> mutex);
 }
 
 void checkOtherTrains(int *var, int notCompleted) {
 	(*var)++;
-	int numTrains = data_trains -> waiting + data_trains -> completed;
+	int numTrains = dataTrains -> waiting + dataTrains -> completed;
 	printf("Treno %d: numTrains %d\n", trainId, numTrains);
 	if (numTrains == NUMBER_OF_TRAINS) {
 		printf("Treno %d: ci siamo tutti\n", trainId);
 		eLUltimoChiudaLaPorta();
 	} else if (notCompleted) {
 		printf("Treno %d: manca ancora qualcuno\n", trainId);
-		pthread_cond_wait(&data_trains -> condvar, &data_trains -> mutex);
+		pthread_cond_wait(&dataTrains -> condvar, &dataTrains -> mutex);
 	}
 }
 
 void eLUltimoChiudaLaPorta(void) {
-	data_trains -> waiting = 0;
-	pthread_cond_broadcast(&data_trains -> condvar);
+	dataTrains -> waiting = 0;
+	pthread_cond_broadcast(&dataTrains -> condvar);
 }
 
 void travelCompleted(void) {
-	pthread_mutex_lock(&data_trains -> mutex);
-	checkOtherTrains(&data_trains -> completed, 0);
-	pthread_mutex_unlock(&data_trains -> mutex);
+	pthread_mutex_lock(&dataTrains -> mutex);
+	checkOtherTrains(&dataTrains -> completed, 0);
+	pthread_mutex_unlock(&dataTrains -> mutex);
 }
 
 void lockExclusiveMA(int maId, int *descriptor) {

@@ -26,6 +26,8 @@
 #define RBC_SHARED_NAME "/rbcdata"
 #define NUMBER_OF_TRAINS 5
 #define NUMBER_OF_MA 16
+#define OK "1\n"
+#define KO "0\n"
 #define ETCS1 "ETCS1"
 #define	ETCS2 "ETCS2"
 #define RBC	"RBC"

@@ -19,7 +19,7 @@ typedef struct Node {
 } Node;
 
 Node *generateRoute(char *);
-char *readLine(char *);
+char *readLine(int);
 Node *buildNode(char *);
 char *decodeId(int);
 void destroyRoute(Node *);

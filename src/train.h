@@ -42,7 +42,7 @@ Node *current;
 request_mode requestMode;
 lock_mode lockMode;
 extern char *exeDirPath;
-shared_data_trains *data_trains;
+shared_data_trains *dataTrains;
 int currDescriptor = -1;
 int nextDescriptor = -1;
 struct flock writeLock = {

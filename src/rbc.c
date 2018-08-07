@@ -13,19 +13,17 @@ int main(int argc, char *argv[]) {
 	int socketFd = createSocket(socketAddr);
 	listen(socketFd, NUMBER_OF_TRAINS);
 
+	unlink(socketAddr);
 	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
-		int clienFd = accept(socketFd, NULL, 0);
+		int clientFd = accept(socketFd, NULL, 0);
 		if (fork() == 0) {
-			char junk[20];
-			if (read(clienFd, junk, 20) == 0) {
-				printf("%s\n", "client closed connection");
-				return 0;
-			}
-			printf("%s\n", junk);
-			close(clienFd);
+			//startServeTrain(clientFd);
+			char *str = readLine(clientFd);
+			printf("%s\n", str);
+			free(str);
 			return 0;
 		}
-		close(clienFd);
+		close(clientFd);
 	}
 	waitChildrenTermination(NUMBER_OF_TRAINS);
 	close(socketFd);
@@ -50,13 +48,13 @@ Node *importRoutes() {
 
 void setUpSharedVariable(void) {
 	int fd = shm_open(RBC_SHARED_NAME, O_RDWR, 0700);
-	data_rbc = (shared_data_rbc *) mmap(0, sizeof(shared_data_rbc), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	dataRbc = (shared_data_rbc *) mmap(0, sizeof(shared_data_rbc), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	close(fd);
 }
 
 void cleanUp(void) {
 	free(exeDirPath);
-	munmap(data_rbc, sizeof(shared_data_rbc));
+	munmap(dataRbc, sizeof(shared_data_rbc));
 	shm_unlink(RBC_SHARED_NAME);
 }
 
@@ -75,4 +73,48 @@ int createSocket(const char *filename) {
 		exit(EXIT_FAILURE);
 	}
 	return socketFd;
+}
+
+void startServeTrain(int clientFd) {
+	while (1) {
+		if (waitForPosition(clientFd) < 0) {
+			break;
+		}
+		waitForRequest(clientFd);
+		pthread_mutex_unlock(&dataRbc -> mutexes[currLock]);
+		pthread_mutex_unlock(&dataRbc -> mutexes[nextLock]);
+	}
+	close(clientFd);
+}
+
+int waitForPosition(int clientFd) {
+	int position;
+	char *str = readLine(clientFd);
+	if (str == NULL) {
+		return -1;
+	}
+	sscanf(str, "%d", &position);
+	if (position > 0) {
+		currLock = position;
+		pthread_mutex_lock(&dataRbc -> mutexes[currLock]);
+	}
+	write(clientFd, OK, strlen(OK) + 1);
+	free(str);
+	return 0;
+}
+
+void waitForRequest(int clientFd) {
+	char *str = readLine(clientFd);
+	int trainId, curr, next;
+	sscanf(str, "%d,%d,%d", &trainId, &curr, &next);
+	nextLock = next;
+	pthread_mutex_lock(&dataRbc -> mutexes[nextLock]);
+	if (ma[nextLock]) {
+		// TODO aggiornare posizione
+		write(clientFd, OK, strlen(OK) + 1);
+	} else {
+		write(clientFd, KO, strlen(KO) + 1);
+	}
+	// TODO loggare richiesta e risposta
+	free(str);
 }
