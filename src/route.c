@@ -32,9 +32,8 @@ char *readLine(int fd) {
 		if (temp != ' ') {
 			str[index++] = temp;
 		}
-	} while (temp != '\n' && temp != EOF);
+	} while (temp != '\n' && temp != '\0' && temp != EOF);
 	str[--index] = '\0';
-	printf("%s\n", str);
 	return str;
 }
 

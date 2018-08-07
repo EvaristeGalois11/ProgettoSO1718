@@ -70,7 +70,8 @@ void cleanUpSharedVariableForTrains(void) {
 void launchRbc(void) {
 	setUpSharedVariableForRbc();
 	startRbc();
-	//
+
+	//SPUDORATAMENTE COPIATO DA TRAIN
 	struct sockaddr_un name;
 	int clientFd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (clientFd < 0) {
@@ -88,17 +89,19 @@ void launchRbc(void) {
 		}
 	} while (result == -1);
 	printf("%s\n", "connessi!");
-	sleep(1);//SERVE A QUALCOSA O È A CASO?
+	sleep(1);
 
 	for (int i = 1; i < NUMBER_OF_TRAINS + 1; i++) {
 		char *path = buildPathRouteFile(i);
 		int d = open(path, O_RDWR);
 		char *line = readLine(d);
 		write(clientFd, line, strlen(line) + 1);
+		close(d);
 		free(path);
 		free(line);
 	}
 	//SPUDORATAMENTE COPIATO DA TRAIN PER PROVARE
+
 	waitChildrenTermination(1);//aspetta che muoia il server
 	cleanUpSharedVariableForRbc();
 }
@@ -154,6 +157,4 @@ void startRbc(void) {
 		perror("Rbc not started");
 		exit(EXIT_FAILURE);
 	}
-	printf("ciao sono papà\n");
-
 }

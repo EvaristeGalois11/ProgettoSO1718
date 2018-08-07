@@ -5,8 +5,8 @@ int main(int argc, char *argv[]) {
 	setUpExeDirPath(argv[0]);
 	createDirIfNotExist(SOCKET_DIR_PATH);
 
-	Node *routes;
-	routes = importRoutes();
+	Node *routes[NUMBER_OF_TRAINS];
+	importRoutes(routes);
 
 	char *socketAddr = csprintf("%s%s%s", exeDirPath, SOCKET_DIR_PATH, SOCKET_FILE_NAME);
 	printf("%s\n", "Rbc started!");
@@ -32,27 +32,20 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-Node *importRoutes() {
+void importRoutes(Node *routes[]) {
 	char *tempSocketAddr = csprintf("%s%s%s", exeDirPath, SOCKET_DIR_PATH, SOCKET_TEMP_NAME);
 	int tempSocketFd = createSocket(tempSocketAddr);
 	listen(tempSocketFd, 1);
 	int tempClientFd = accept(tempSocketFd, NULL, 0);
 	char *line;
-	Node *node;
 	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
-		printf("XD\n");
 		line = readLine(tempClientFd);
-		printf("%s\n", line );
-		node = generateRoute(line);
-		printf("%d\n", i ); //NON ME LA STA STAMPANDO
+		routes[i] = generateRoute(line);
 	}
-	printf("rofl\n" );
 	free(line);
-	free(node);
 	close(tempClientFd);
 	close(tempSocketFd);
 	unlink(tempSocketAddr);
-	return NULL;
 }
 
 void setUpSharedVariable(void) {

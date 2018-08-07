@@ -18,7 +18,7 @@ int createSocket(const char*);
 void startServeTrain(int);
 int waitForPosition(int);
 void waitForRequest(int);
-Node *importRoutes(void);
+void importRoutes(Node*[]);
 
 shared_data_rbc *data_rbc;
 int ma[NUMBER_OF_MA] = {0};
