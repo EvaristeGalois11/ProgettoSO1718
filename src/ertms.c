@@ -3,6 +3,8 @@
 #include <sys/un.h>
 #include "ertms.h"
 
+#include "route.h"
+
 int main(int argc, char *argv[]) {
 	mode_t previousMask = umask(0000);
 	exeDirPath = truncExeName(getExePath());
@@ -67,34 +69,37 @@ void cleanUpSharedVariableForTrains(void) {
 
 void launchRbc(void) {
 	setUpSharedVariableForRbc();
-	if (fork() == 0) {
-		//
-		printf("ci arrivi qua?\n");
-		struct sockaddr_un name;
-		int clientFd = socket(AF_UNIX, SOCK_STREAM, 0);
-		if (clientFd < 0) {
-			perror("Impossible to obtain an anonymous socket");
-			exit(EXIT_FAILURE);
-		}
-		name.sun_family = AF_UNIX;
-		char *socketAddr = csprintf("%s%s%s", exeDirPath, SOCKET_DIR_PATH, SOCKET_TEMP_NAME);
-		strcpy(name.sun_path, socketAddr);
-		int result;
-		do {
-			result = connect(clientFd, (struct sockaddr *) &name, sizeof(name));
-			if (result == -1) {
-				sleep(1);
-			}
-		} while (result == -1);
-		printf("%s\n", "connessi!");
-		sleep(10);
-		write(clientFd, "messaggiostandard", 20);
-		printf("le sto uscendo\n");
-		return;
-		//SPUDORATAMENTE COPIATO DA TRAIN PER PROVARE
-	}
 	startRbc();
-	waitChildrenTermination(1);
+	//
+	struct sockaddr_un name;
+	int clientFd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (clientFd < 0) {
+		perror("Impossible to obtain an anonymous socket");
+		exit(EXIT_FAILURE);
+	}
+	name.sun_family = AF_UNIX;
+	char *socketAddr = csprintf("%s%s%s", exeDirPath, SOCKET_DIR_PATH, SOCKET_TEMP_NAME);
+	strcpy(name.sun_path, socketAddr);
+	int result;
+	do {
+		result = connect(clientFd, (struct sockaddr *) &name, sizeof(name));
+		if (result == -1) {
+			sleep(1);
+		}
+	} while (result == -1);
+	printf("%s\n", "connessi!");
+	sleep(1);//SERVE A QUALCOSA O È A CASO?
+
+	for (int i = 1; i < NUMBER_OF_TRAINS + 1; i++) {
+		char *path = buildPathRouteFile(i);
+		int d = open(path, O_RDWR);
+		char *line = readLine(d);
+		write(clientFd, line, strlen(line) + 1);
+		free(path);
+		free(line);
+	}
+	//SPUDORATAMENTE COPIATO DA TRAIN PER PROVARE
+	waitChildrenTermination(1);//aspetta che muoia il server
 	cleanUpSharedVariableForRbc();
 }
 
@@ -143,8 +148,12 @@ void startTrains(char *mode) {
 }
 
 void startRbc(void) {
-	char *pathRbc = csprintf("%s%s", exeDirPath, RBC_PROCESS_NAME);
-	execl(pathRbc, pathRbc, NULL);
-	perror("Rbc not started");
-	exit(EXIT_FAILURE);
+	if (fork() == 0) {
+		char *pathRbc = csprintf("%s%s", exeDirPath, RBC_PROCESS_NAME);
+		execl(pathRbc, pathRbc, NULL);
+		perror("Rbc not started");
+		exit(EXIT_FAILURE);
+	}
+	printf("ciao sono papà\n");
+
 }

@@ -37,9 +37,18 @@ Node *importRoutes() {
 	int tempSocketFd = createSocket(tempSocketAddr);
 	listen(tempSocketFd, 1);
 	int tempClientFd = accept(tempSocketFd, NULL, 0);
-	char junk[20];
-	read(tempClientFd, junk, 20);
-	printf("%s\n", junk );
+	char *line;
+	Node *node;
+	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
+		printf("XD\n");
+		line = readLine(tempClientFd);
+		printf("%s\n", line );
+		node = generateRoute(line);
+		printf("%d\n", i ); //NON ME LA STA STAMPANDO
+	}
+	printf("rofl\n" );
+	free(line);
+	free(node);
 	close(tempClientFd);
 	close(tempSocketFd);
 	unlink(tempSocketAddr);
