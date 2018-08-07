@@ -5,6 +5,9 @@ int main(int argc, char *argv[]) {
 	setUpExeDirPath(argv[0]);
 	createDirIfNotExist(SOCKET_DIR_PATH);
 
+	Node *routes;
+	routes = importRoutes();
+
 	char *socketAddr = csprintf("%s%s%s", exeDirPath, SOCKET_DIR_PATH, SOCKET_FILE_NAME);
 	printf("%s\n", "Rbc started!");
 	int socketFd = createSocket(socketAddr);
@@ -29,6 +32,20 @@ int main(int argc, char *argv[]) {
 	unlink(socketAddr);
 	cleanUp();
 	return 0;
+}
+
+Node *importRoutes() {
+	char *tempSocketAddr = csprintf("%s%s%s", exeDirPath, SOCKET_DIR_PATH, SOCKET_TEMP_NAME);
+	int tempSocketFd = createSocket(tempSocketAddr);
+	listen(tempSocketFd, 1);
+	int tempClientFd = accept(tempSocketFd, NULL, 0);
+	char junk[20];
+	read(tempClientFd, junk, 20);
+	printf("%s\n", junk );
+	close(tempClientFd);
+	close(tempSocketFd);
+	unlink(tempSocketAddr);
+	return NULL;
 }
 
 void setUpSharedVariable(void) {

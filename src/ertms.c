@@ -1,3 +1,6 @@
+#include <sys/mman.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include "ertms.h"
 
 int main(int argc, char *argv[]) {
@@ -64,7 +67,34 @@ void cleanUpSharedVariableForTrains(void) {
 
 void launchRbc(void) {
 	setUpSharedVariableForRbc();
+	if (fork() == 0) {
+		//
+		printf("ci arrivi qua?\n");
+		struct sockaddr_un name;
+		int clientFd = socket(AF_UNIX, SOCK_STREAM, 0);
+		if (clientFd < 0) {
+			perror("Impossible to obtain an anonymous socket");
+			exit(EXIT_FAILURE);
+		}
+		name.sun_family = AF_UNIX;
+		char *socketAddr = csprintf("%s%s%s", exeDirPath, SOCKET_DIR_PATH, SOCKET_TEMP_NAME);
+		strcpy(name.sun_path, socketAddr);
+		int result;
+		do {
+			result = connect(clientFd, (struct sockaddr *) &name, sizeof(name));
+			if (result == -1) {
+				sleep(1);
+			}
+		} while (result == -1);
+		printf("%s\n", "connessi!");
+		sleep(10);
+		write(clientFd, "messaggiostandard", 20);
+		printf("le sto uscendo\n");
+		return;
+		//SPUDORATAMENTE COPIATO DA TRAIN PER PROVARE
+	}
 	startRbc();
+
 	int status;
 	int pid = wait(&status);
 	printf("Child with PID %ld exited with status 0x%x\n", (long) pid, status);

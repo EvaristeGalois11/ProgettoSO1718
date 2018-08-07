@@ -21,6 +21,7 @@
 #define LOG_EXTENSION ".log"
 #define SOCKET_DIR_PATH "../resources/server"
 #define SOCKET_FILE_NAME "/socket"
+#define SOCKET_TEMP_NAME "/temp"
 #define TRAIN_SHARED_NAME "/traindata"
 #define RBC_SHARED_NAME "/rbcdata"
 #define NUMBER_OF_TRAINS 5

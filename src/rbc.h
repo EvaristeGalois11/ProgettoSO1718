@@ -15,5 +15,8 @@ void setUpSharedVariable(void);
 void cleanUp(void);
 int createSocket(const char*);
 
+
+Node *importRoutes();
+
 shared_data_rbc *data_rbc;
 #endif
