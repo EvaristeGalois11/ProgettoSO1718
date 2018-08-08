@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
 	}
 	start = readAndDecodeRoute();
 	current = start;
-	// startTravel();
+	startTravel();
 	cleanUp();
 	return 0;
 }
@@ -32,25 +32,8 @@ void cleanUp(void) {
 }
 
 void connectToSocket(void) {
-	struct sockaddr_un name;
-	clientFd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (clientFd < 0) {
-		perror("Impossible to obtain an anonymous socket");
-		exit(EXIT_FAILURE);
-	}
-	name.sun_family = AF_UNIX;
-	char *socketAddr = csprintf("%s%s%s", exeDirPath, SOCKET_DIR_PATH, SOCKET_FILE_NAME);
-	strcpy(name.sun_path, socketAddr);
-	int result;
-	do {
-		result = connect(clientFd, (struct sockaddr *) &name, sizeof(name));
-		if (result == -1) {
-			sleep(SLEEP_TIME);
-		}
-	} while (result == -1);
-	printf("%s\n", "connessi!");
-	sleep(1);
-	write(clientFd, "messaggiostandard\n", 20);
+	char *trainSocketAddr = buildPathTrainSocketFile();
+	clientFd = setUpSocket(trainSocketAddr, 0);
 }
 
 Node *readAndDecodeRoute(void) {
@@ -72,19 +55,28 @@ int requestModeEtcs1(int train, int curr, int next) {
 	}
 }
 
-int checkMAxFile(int id) {
-	lockExclusiveMA(id, &nextDescriptor);
-	printf("Treno %d: Inizio lettura file: MA%d\n", trainId, id);
+int checkMAxFile(int maId) {
+	lockExclusiveMA(maId, &nextDescriptor);
+	printf("Treno %d: Inizio lettura file: MA%d\n", trainId, maId);
 	char byte;
 	pread(nextDescriptor, &byte, 1, 0);
-	printf("Treno %d: Fine lettura file: MA%d\n", trainId, id);
+	printf("Treno %d: Fine lettura file: MA%d\n", trainId, maId);
 	printf("Treno %d: letto byte %c\n", trainId, byte);
 	return (byte == '0');
 }
 
 int requestModeEtcs2(int train, int curr, int next) {
-	// TODO implementare richiesta al server RBC
-	return 1;
+	char *message = csprintf("%d,%d,%d", trainId, curr, next);
+	write(clientFd, message, strlen(message) + 1);
+	char *response = readLine(clientFd);
+	int result = 0;
+	if (strstr(response, OK)) {
+		openFile(next, &nextDescriptor);
+		result = 1;
+	}
+	free(message);
+	free(response);
+	return result;
 }
 
 void startTravel(void) {
@@ -99,8 +91,8 @@ void startTravel(void) {
 			move();
 			current = current -> next;
 		}
-		unlockFile(&currDescriptor);
-		unlockFile(&nextDescriptor);
+		closeFile(&currDescriptor);
+		closeFile(&nextDescriptor);
 		printf("Treno %d: giro %d terminato\n", trainId, count);
 		sleep(SLEEP_TIME);
 	} while (current -> id > 0 && (current -> id != start -> id));
@@ -140,18 +132,23 @@ void travelCompleted(void) {
 }
 
 void lockExclusiveMA(int maId, int *descriptor) {
-	if (maId > 0) {
-		char *path = buildPathMAxFile(maId);
-		int d = open(path, O_RDWR);
+	if (openFile(maId, descriptor)) {
 		printf("Treno %d: richiesto lock file MA%d\n", trainId, maId);
-		fcntl (d, F_SETLKW, &writeLock);
+		fcntl (*descriptor, F_SETLKW, &writeLock);
 		printf("Treno %d: ottenuto lock file MA%d\n", trainId, maId);
-		free(path);
-		*descriptor = d;
 	}
 }
 
-void unlockFile(int *descriptor) {
+int openFile(int maId, int *descriptor) {
+	if (maId > 0) {
+		char *path = buildPathMAxFile(maId);
+		*descriptor = open(path, O_RDWR);
+		return 1;
+	}
+	return 0;
+}
+
+void closeFile(int *descriptor) {
 	if (*descriptor != -1) {
 		close(*descriptor);
 		printf("Treno %d: chiusura lock di un file\n", trainId);
@@ -160,7 +157,16 @@ void unlockFile(int *descriptor) {
 }
 
 void notifyPosition(int maId, int *descriptor) {
-	// TODO notificare posizione corrente
+	if (maId > 0) {
+		char *message = csprintf("%d", maId);
+		printf("Treno %d: Notifica posizione %s\n", trainId, message);
+		write(clientFd, message, strlen(message) + 1);
+		openFile(maId, descriptor);
+		char *response = readLine(clientFd);
+		printf("Treno %d: Risposta alla notifica %s\n", trainId, response);
+		free(response);
+		free(message);
+	}
 }
 
 void move(void) {

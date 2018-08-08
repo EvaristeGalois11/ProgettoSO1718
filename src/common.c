@@ -20,6 +20,14 @@ char *buildPathRbcLogFile(void) {
 	return csprintf("%s%s%s%s", exeDirPath, LOG_DIR_PATH, LOG_RBC_FILE_PREFIX, LOG_EXTENSION);
 }
 
+char *buildPathTrainSocketFile(void) {
+	return csprintf("%s%s%s", exeDirPath, SOCKET_DIR_PATH, TRAIN_SOCKET_NAME);
+}
+
+char *buildPathErtmsSocketFile(void) {
+	return csprintf("%s%s%s", exeDirPath, SOCKET_DIR_PATH, ERTMS_SOCKET_NAME);
+}
+
 char *csprintf(const char *format, ...) {
 	va_list arglist1, arglist2;
 	va_start(arglist1, format);
@@ -64,4 +72,32 @@ void waitChildrenTermination(int numChild) {
 		pid = wait(&status);
 		printf("Child with PID %ld exited with status 0x%x\n", (long) pid, status);
 	}
+}
+
+int setUpSocket(char *filename, int isServer) {
+	unlink(filename);
+	struct sockaddr_un name;
+	int socketFd;
+	socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (socketFd < 0) {
+		perror("Impossible to obtain an anonymous socket");
+		exit(EXIT_FAILURE);
+	}
+	name.sun_family = AF_UNIX;
+	strcpy(name.sun_path, filename);
+	if (isServer) {
+		if (bind(socketFd, (struct sockaddr *) &name, sizeof(name)) < 0) {
+			perror("Impossible to bind the socket");
+			exit(EXIT_FAILURE);
+		}
+	} else {
+		int result;
+		do {
+			result = connect(socketFd, (struct sockaddr *) &name, sizeof(name));
+			if (result == -1) {
+				sleep(1);
+			}
+		} while (result == -1);
+	}
+	return socketFd;
 }

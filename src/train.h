@@ -31,9 +31,11 @@ void checkOtherTrains(int *, int);
 void eLUltimoChiudaLaPorta(void);
 void travelCompleted(void);
 void lockExclusiveMA(int, int *);
-void unlockFile(int *);
+int openFile(int, int *);
+void closeFile(int *);
 void notifyPosition(int, int *);
 void move(void);
+void checkDescriptors(void);
 void writeOneByte(int, char *);
 
 int trainId;

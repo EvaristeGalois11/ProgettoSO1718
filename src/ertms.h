@@ -23,6 +23,7 @@ void cleanUpSharedVariableForRbc(void);
 void createMAxFiles(void);
 void startTrains(char *);
 void startRbc(void);
+void sendRoutes(void);
 
 extern char *exeDirPath;
 shared_data_trains *dataTrains;

@@ -4,48 +4,42 @@ int main(int argc, char *argv[]) {
 	setUpSharedVariable();
 	setUpExeDirPath(argv[0]);
 	createDirIfNotExist(SOCKET_DIR_PATH);
-
-	Node *routes[NUMBER_OF_TRAINS];
-	importRoutes(routes);
-
-	char *socketAddr = csprintf("%s%s%s", exeDirPath, SOCKET_DIR_PATH, SOCKET_FILE_NAME);
-	printf("%s\n", "Rbc started!");
-	int socketFd = createSocket(socketAddr);
-	listen(socketFd, NUMBER_OF_TRAINS);
-
-	unlink(socketAddr);
+	importRoutes();
+	char *trainSocketAddr = buildPathTrainSocketFile();
+	int trainSocketFd = setUpSocket(trainSocketAddr, 1);
+	listen(trainSocketFd, NUMBER_OF_TRAINS);
 	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
-		int clientFd = accept(socketFd, NULL, 0);
+		int clientFd = accept(trainSocketFd, NULL, 0);
 		if (fork() == 0) {
-			//startServeTrain(clientFd);
-			char *str = readLine(clientFd);
-			printf("%s\n", str);
-			free(str);
+			startServeTrain(clientFd);
+			close(clientFd);
 			return 0;
 		}
 		close(clientFd);
 	}
 	waitChildrenTermination(NUMBER_OF_TRAINS);
-	close(socketFd);
-	unlink(socketAddr);
+	close(trainSocketFd);
+	unlink(trainSocketAddr);
+	free(trainSocketAddr);
 	cleanUp();
 	return 0;
 }
 
-void importRoutes(Node *routes[]) {
-	char *tempSocketAddr = csprintf("%s%s%s", exeDirPath, SOCKET_DIR_PATH, SOCKET_TEMP_NAME);
-	int tempSocketFd = createSocket(tempSocketAddr);
-	listen(tempSocketFd, 1);
-	int tempClientFd = accept(tempSocketFd, NULL, 0);
-	char *line;
+void importRoutes(void) {
+	char *ertmsSocketAddr = buildPathErtmsSocketFile();
+	int ertmsSocketFd = setUpSocket(ertmsSocketAddr, 1);
+	listen(ertmsSocketFd, 1);
+	int ertmsClientFd = accept(ertmsSocketFd, NULL, 0);
 	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
-		line = readLine(tempClientFd);
+		char *line = readLine(ertmsClientFd);
 		routes[i] = generateRoute(line);
+		starts[i] = routes[i];
+		stations[-(routes[i] -> id)]++;
+		free(line);
 	}
-	free(line);
-	close(tempClientFd);
-	close(tempSocketFd);
-	unlink(tempSocketAddr);
+	close(ertmsClientFd);
+	close(ertmsSocketFd);
+	unlink(ertmsSocketAddr);
 }
 
 void setUpSharedVariable(void) {
@@ -56,30 +50,17 @@ void setUpSharedVariable(void) {
 
 void cleanUp(void) {
 	free(exeDirPath);
+	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
+		destroyRoute(starts[i]);
+	}
 	munmap(dataRbc, sizeof(shared_data_rbc));
 	shm_unlink(RBC_SHARED_NAME);
-}
-
-int createSocket(const char *filename) {
-	struct sockaddr_un name;
-	int socketFd;
-	socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (socketFd < 0) {
-		perror("Impossible to obtain an anonymous socket");
-		exit(EXIT_FAILURE);
-	}
-	name.sun_family = AF_UNIX;
-	strcpy(name.sun_path, filename);
-	if (bind(socketFd, (struct sockaddr *) &name, sizeof(name)) < 0) {
-		perror("Impossible to bind the socket");
-		exit(EXIT_FAILURE);
-	}
-	return socketFd;
 }
 
 void startServeTrain(int clientFd) {
 	while (1) {
 		if (waitForPosition(clientFd) < 0) {
+			printf("%s\n", "Connessione chiusa");
 			break;
 		}
 		waitForRequest(clientFd);
@@ -96,11 +77,14 @@ int waitForPosition(int clientFd) {
 		return -1;
 	}
 	sscanf(str, "%d", &position);
+	printf("Posizione comunicata %d\n", position);
 	if (position > 0) {
 		currLock = position;
 		pthread_mutex_lock(&dataRbc -> mutexes[currLock]);
 	}
+	sleep(10);
 	write(clientFd, OK, strlen(OK) + 1);
+	perror("Write non riuscita");
 	free(str);
 	return 0;
 }
@@ -111,12 +95,28 @@ void waitForRequest(int clientFd) {
 	sscanf(str, "%d,%d,%d", &trainId, &curr, &next);
 	nextLock = next;
 	pthread_mutex_lock(&dataRbc -> mutexes[nextLock]);
-	if (ma[nextLock]) {
-		// TODO aggiornare posizione
-		write(clientFd, OK, strlen(OK) + 1);
+	char *response;
+	if ((routes[trainId - 1] -> next -> id == next) && (next < 0 || ma[next])) {
+		updatePosition(trainId, curr, next);
+		response = OK;
 	} else {
-		write(clientFd, KO, strlen(KO) + 1);
+		response = KO;
 	}
-	// TODO loggare richiesta e risposta
+	logRbc(trainId, curr, next, response);
+	write(clientFd, response, strlen(response) + 1);
 	free(str);
+}
+
+void updatePosition(int trainId, int curr, int next) {
+	routes[trainId - 1] = routes[trainId - 1] -> next;
+	if (curr < 0) {
+		stations[-curr]--;
+	} else {
+		ma[curr] = 0;
+	}
+	if (next < 0) {
+		stations[-next]++;
+	} else {
+		ma[next] = 1;
+	}
 }

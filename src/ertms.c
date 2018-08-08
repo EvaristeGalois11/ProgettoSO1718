@@ -70,39 +70,8 @@ void cleanUpSharedVariableForTrains(void) {
 void launchRbc(void) {
 	setUpSharedVariableForRbc();
 	startRbc();
-
-	//SPUDORATAMENTE COPIATO DA TRAIN
-	struct sockaddr_un name;
-	int clientFd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (clientFd < 0) {
-		perror("Impossible to obtain an anonymous socket");
-		exit(EXIT_FAILURE);
-	}
-	name.sun_family = AF_UNIX;
-	char *socketAddr = csprintf("%s%s%s", exeDirPath, SOCKET_DIR_PATH, SOCKET_TEMP_NAME);
-	strcpy(name.sun_path, socketAddr);
-	int result;
-	do {
-		result = connect(clientFd, (struct sockaddr *) &name, sizeof(name));
-		if (result == -1) {
-			sleep(1);
-		}
-	} while (result == -1);
-	printf("%s\n", "connessi!");
-	sleep(1);
-
-	for (int i = 1; i < NUMBER_OF_TRAINS + 1; i++) {
-		char *path = buildPathRouteFile(i);
-		int d = open(path, O_RDWR);
-		char *line = readLine(d);
-		write(clientFd, line, strlen(line) + 1);
-		close(d);
-		free(path);
-		free(line);
-	}
-	//SPUDORATAMENTE COPIATO DA TRAIN PER PROVARE
-
-	waitChildrenTermination(1);//aspetta che muoia il server
+	sendRoutes();
+	waitChildrenTermination(1);
 	cleanUpSharedVariableForRbc();
 }
 
@@ -157,4 +126,20 @@ void startRbc(void) {
 		perror("Rbc not started");
 		exit(EXIT_FAILURE);
 	}
+}
+
+void sendRoutes(void) {
+	char *ertmsSocketAddr = buildPathErtmsSocketFile();
+	int clientFd = setUpSocket(ertmsSocketAddr, 0);
+	for (int i = 1; i < NUMBER_OF_TRAINS + 1; i++) {
+		char *path = buildPathRouteFile(i);
+		int d = open(path, O_RDWR);
+		char *line = readLine(d);
+		write(clientFd, line, strlen(line) + 1);
+		close(d);
+		free(path);
+		free(line);
+	}
+	free(ertmsSocketAddr);
+	close(clientFd);
 }
