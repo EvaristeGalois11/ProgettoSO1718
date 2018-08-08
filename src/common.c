@@ -70,7 +70,7 @@ void waitChildrenTermination(int numChild) {
 	pid_t pid;
 	for (int i = 0; i < numChild; i++) {
 		pid = wait(&status);
-		printf("Child with PID %ld exited with status 0x%x\n", (long) pid, status);
+		printf("Child with PID %ld exited with status %d\n", (long) pid, status);
 	}
 }
 

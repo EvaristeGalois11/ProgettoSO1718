@@ -61,14 +61,16 @@ int checkMAxFile(int maId) {
 	char byte;
 	pread(nextDescriptor, &byte, 1, 0);
 	printf("Treno %d: Fine lettura file: MA%d\n", trainId, maId);
-	printf("Treno %d: letto byte %c\n", trainId, byte);
+	printf("Treno %d: Letto byte %c\n", trainId, byte);
 	return (byte == '0');
 }
 
 int requestModeEtcs2(int train, int curr, int next) {
 	char *message = csprintf("%d,%d,%d", trainId, curr, next);
+	printf("Treno %d: Inviato messaggio %s\n", trainId, message);
 	write(clientFd, message, strlen(message) + 1);
 	char *response = readLine(clientFd);
+	printf("Treno %d: Ricevuta risposta %s\n", trainId, response);
 	int result = 0;
 	if (strstr(response, OK)) {
 		openFile(next, &nextDescriptor);
@@ -142,6 +144,7 @@ void lockExclusiveMA(int maId, int *descriptor) {
 int openFile(int maId, int *descriptor) {
 	if (maId > 0) {
 		char *path = buildPathMAxFile(maId);
+		printf("Treno %d: aperto file MA%d\n", trainId, maId);
 		*descriptor = open(path, O_RDWR);
 		return 1;
 	}
@@ -151,22 +154,20 @@ int openFile(int maId, int *descriptor) {
 void closeFile(int *descriptor) {
 	if (*descriptor != -1) {
 		close(*descriptor);
-		printf("Treno %d: chiusura lock di un file\n", trainId);
+		printf("Treno %d: chiusura di un file\n", trainId);
 	}
 	*descriptor = -1;
 }
 
 void notifyPosition(int maId, int *descriptor) {
-	if (maId > 0) {
-		char *message = csprintf("%d", maId);
-		printf("Treno %d: Notifica posizione %s\n", trainId, message);
-		write(clientFd, message, strlen(message) + 1);
-		openFile(maId, descriptor);
-		char *response = readLine(clientFd);
-		printf("Treno %d: Risposta alla notifica %s\n", trainId, response);
-		free(response);
-		free(message);
-	}
+	char *message = csprintf("%d", maId);
+	printf("Treno %d: Notifica posizione %s\n", trainId, message);
+	write(clientFd, message, strlen(message) + 1);
+	openFile(maId, descriptor);
+	char *response = readLine(clientFd);
+	printf("Treno %d: Ricevuta risposta %s\n", trainId, response);
+	free(response);
+	free(message);
 }
 
 void move(void) {
