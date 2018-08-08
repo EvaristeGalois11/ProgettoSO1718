@@ -75,7 +75,6 @@ void waitChildrenTermination(int numChild) {
 }
 
 int setUpSocket(char *filename, int isServer) {
-	unlink(filename);
 	struct sockaddr_un name;
 	int socketFd;
 	socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -86,6 +85,7 @@ int setUpSocket(char *filename, int isServer) {
 	name.sun_family = AF_UNIX;
 	strcpy(name.sun_path, filename);
 	if (isServer) {
+		unlink(filename);
 		if (bind(socketFd, (struct sockaddr *) &name, sizeof(name)) < 0) {
 			perror("Impossible to bind the socket");
 			exit(EXIT_FAILURE);

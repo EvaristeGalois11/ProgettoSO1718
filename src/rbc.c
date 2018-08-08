@@ -11,6 +11,7 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
 		int clientFd = accept(trainSocketFd, NULL, 0);
 		if (fork() == 0) {
+			printf("sono treno %d e questo il mio clientfd %d\n",i,clientFd );
 			startServeTrain(clientFd);
 			close(clientFd);
 			return 0;
@@ -82,9 +83,9 @@ int waitForPosition(int clientFd) {
 		currLock = position;
 		pthread_mutex_lock(&dataRbc -> mutexes[currLock]);
 	}
-	sleep(10);
-	write(clientFd, OK, strlen(OK) + 1);
-	perror("Write non riuscita");
+	//sleep(10);
+	//write(clientFd, OK, strlen(OK) + 1);
+	//perror("Write non riuscita");
 	free(str);
 	return 0;
 }
