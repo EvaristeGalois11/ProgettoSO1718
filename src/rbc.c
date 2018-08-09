@@ -9,11 +9,13 @@ int main(int argc, char *argv[]) {
 	int trainSocketFd = setUpSocket(trainSocketAddr, 1);
 	listen(trainSocketFd, NUMBER_OF_TRAINS);
 	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
+		tempId = i;
 		int clientFd = accept(trainSocketFd, NULL, 0);
 		if (fork() == 0) {
-			printf("%s\n", "Accettata la connessione di un treno");
+			printf("Rbc %d, Accettata la connessione di un treno\n", tempId);
 			startServeTrain(clientFd);
 			close(clientFd);
+			cleanUp();
 			return 0;
 		}
 		close(clientFd);
@@ -33,14 +35,14 @@ void importRoutes(void) {
 	int ertmsClientFd = accept(ertmsSocketFd, NULL, 0);
 	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
 		char *line = readLine(ertmsClientFd);
-		printf("Ricevuta linea: %s\n", line);
+		printf("Rbc %d: Ricevuta linea: %s\n", tempId, line);
 		routes[i] = generateRoute(line);
 		starts[i] = routes[i];
-		stations[-(routes[i] -> id) - 1]++;
+		dataRbc -> stations[-(routes[i] -> id) - 1]++;
 		free(line);
 	}
 	for (int i = 0; i < NUMBER_OF_STATIONS; i++) {
-		printf("Stazione %d: treni presenti %d\n", i, stations[i]);
+		printf("Rbc %d: Stazione %d: treni presenti %d\n", tempId, i, dataRbc -> stations[i]);
 	}
 	close(ertmsClientFd);
 	close(ertmsSocketFd);
@@ -65,7 +67,7 @@ void cleanUp(void) {
 void startServeTrain(int clientFd) {
 	while (1) {
 		if (waitForPosition(clientFd) < 0) {
-			printf("%s\n", "Connessione chiusa");
+			printf("Rbc %d: Connessione chiusa\n", tempId);
 			break;
 		}
 		waitForRequest(clientFd);
@@ -82,13 +84,13 @@ int waitForPosition(int clientFd) {
 		return -1;
 	}
 	sscanf(str, "%d", &position);
-	printf("Posizione comunicata %d\n", position);
+	printf("Rbc %d: Posizione comunicata %d\n", tempId, position);
 	if (position > 0) {
 		currLock = position - 1;
-		printf("Richiesto lock %d\n", currLock);
+		printf("Rbc %d: Richiesto lock %d\n", tempId, currLock);
 		pthread_mutex_lock(&(dataRbc -> mutexes[currLock]));
 	}
-	printf("Invio risposta %s\n", OK);
+	printf("Rbc %d: Invio risposta %s\n", tempId, OK);
 	write(clientFd, OK, strlen(OK) + 1);
 	free(str);
 	return 0;
@@ -96,52 +98,54 @@ int waitForPosition(int clientFd) {
 
 void waitForRequest(int clientFd) {
 	char *str = readLine(clientFd);
-	printf("Ricevuta richiesta autorizzazione %s\n", str);
+	printf("Rbc %d: Ricevuta richiesta autorizzazione %s\n", tempId, str);
 	int trainId, curr, next;
 	sscanf(str, "%d,%d,%d", &trainId, &curr, &next);
-	nextLock = next - 1;
-	printf("Richiesto lock %d\n", nextLock);
-	pthread_mutex_lock(&dataRbc -> mutexes[nextLock]);
+	if (next > 0) {
+		nextLock = next - 1;
+		printf("Rbc %d: Richiesto lock %d\n", tempId, nextLock);
+		pthread_mutex_lock(&dataRbc -> mutexes[nextLock]);
+	}
 	char *response;
-	if ((routes[trainId - 1] -> next -> id == next) && (next < 0 || ma[next - 1] == 0)) {
+	if ((routes[trainId - 1] -> next -> id == next) && (next < 0 || dataRbc -> ma[next - 1] == 0)) {
 		updatePosition(trainId, curr, next);
 		response = OK;
 	} else {
 		response = KO;
 	}
-	printf("Invio risposta %s\n", response);
+	printf("Rbc %d: Invio risposta %s\n", tempId, response);
 	logRbc(trainId, curr, next, response);
 	write(clientFd, response, strlen(response) + 1);
 	free(str);
 }
 
 void updatePosition(int trainId, int curr, int next) {
-	printf("Posizione treno %d: posizione %d\n", trainId, routes[trainId - 1] -> id);
+	//printf("Posizione treno %d: posizione %d\n", trainId, routes[trainId - 1] -> id);
 	routes[trainId - 1] = routes[trainId - 1] -> next;
-	printf("Posizione treno %d: posizione %d\n", trainId, routes[trainId - 1] -> id);
+	//printf("Posizione treno %d: posizione %d\n", trainId, routes[trainId - 1] -> id);
 	if (curr < 0) {
-		printf("Stazione %d: numero treni %d\n", curr, stations[-curr - 1]);
-		stations[-curr - 1]--;
-		printf("Stazione %d: numero treni %d\n", curr, stations[-curr - 1]);
+		//printf("Stazione %d: numero treni %d\n", curr, dataRbc -> stations[-curr - 1]);
+		dataRbc -> stations[-curr - 1]--;
+		//printf("Stazione %d: numero treni %d\n", curr, dataRbc -> stations[-curr - 1]);
 	} else {
-		printf("MA%d: stato %d\n", curr, ma[curr - 1]);
-		ma[curr - 1] = 0;
-		printf("MA%d: stato %d\n", curr, ma[curr - 1]);
+		//printf("MA%d: stato %d\n", curr, dataRbc -> ma[curr - 1]);
+		dataRbc -> ma[curr - 1] = 0;
+		//printf("MA%d: stato %d\n", curr, dataRbc -> ma[curr - 1]);
 	}
 	if (next < 0) {
-		printf("Stazione %d: numero treni %d\n", next, stations[-next - 1]);
-		stations[-next - 1]++;
-		printf("Stazione %d: numero treni %d\n", next, stations[-next - 1]);
+		//printf("Stazione %d: numero treni %d\n", next, dataRbc -> stations[-next - 1]);
+		dataRbc -> stations[-next - 1]++;
+		//printf("Stazione %d: numero treni %d\n", next, dataRbc -> stations[-next - 1]);
 	} else {
-		printf("MA%d: stato %d\n", next, ma[next - 1]);
-		ma[next - 1] = 1;
-		printf("MA%d: stato %d\n", next, ma[next - 1]);
+		//printf("MA%d: stato %d\n", next, dataRbc -> ma[next - 1]);
+		dataRbc -> ma[next - 1] = 1;
+		//printf("MA%d: stato %d\n", next, dataRbc -> ma[next - 1]);
 	}
 }
 
 void unlockMutex(int *id) {
-	if (*id > 0) {
-		printf("Sblocco lock %d\n", *id);
+	if (*id >= 0) {
+		printf("Rbc %d: Sblocco lock %d\n", tempId, *id);
 		pthread_mutex_unlock(&dataRbc -> mutexes[*id]);
 	}
 	*id = -1;
