@@ -1,9 +1,4 @@
-#include <sys/mman.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 #include "ertms.h"
-
-#include "route.h"
 
 int main(int argc, char *argv[]) {
 	mode_t previousMask = umask(0000);

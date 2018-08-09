@@ -3,10 +3,13 @@
 #include <stdio.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <string.h>
 #include <stdlib.h>
-#include <errno.h>
+#include <errno.h>//perror da togliere
 #include "common.h"
+#include "route.h"
 
 #define EXE_INFO_PATH "/proc/self/exe"
 #define TRAIN_PROCESS_NAME "train"

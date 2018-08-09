@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 		int clientFd = accept(trainSocketFd, NULL, 0);
 		if (fork() == 0) {
 			printf("Rbc %d, Accettata la connessione di un treno\n", tempId);
-			startServeTrain(clientFd);
+			startServerTrain(clientFd);
 			close(clientFd);
 			cleanUp();
 			return 0;
@@ -64,7 +64,7 @@ void cleanUp(void) {
 	shm_unlink(RBC_SHARED_NAME);
 }
 
-void startServeTrain(int clientFd) {
+void startServerTrain(int clientFd) {
 	while (1) {
 		if (waitForPosition(clientFd) < 0) {
 			printf("Rbc %d: Connessione chiusa\n", tempId);

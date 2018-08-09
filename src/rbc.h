@@ -16,7 +16,7 @@ void importRoutes(void);
 void setUpSharedVariable(void);
 void cleanUp(void);
 int createSocket(const char*);
-void startServeTrain(int);
+void startServerTrain(int);
 int waitForPosition(int);
 void waitForRequest(int);
 void updatePosition(int, int, int);
