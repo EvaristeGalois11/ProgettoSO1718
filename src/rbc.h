@@ -12,16 +12,17 @@
 #include "log.h"
 
 int main(int, char **);
-void importRoutes(void);
 void setUpSharedVariable(void);
 void cleanUp(void);
-int createSocket(const char*);
-void startServerTrain(int);
+void importRoutes(void);
+void startTrainSocket(void);
+void serveTrain(int);
 int waitForPosition(int);
 void waitForRequest(int);
 void updatePosition(int, int, int);
 void unlockMutex(int *);
 
+extern char *exeDirPath;
 shared_data_rbc *data_rbc;
 Node *routes[NUMBER_OF_TRAINS];
 Node *starts[NUMBER_OF_TRAINS];

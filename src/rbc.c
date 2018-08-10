@@ -5,27 +5,24 @@ int main(int argc, char *argv[]) {
 	setUpExeDirPath(argv[0]);
 	createDirIfNotExist(SOCKET_DIR_PATH);
 	importRoutes();
-	char *trainSocketAddr = buildPathTrainSocketFile();
-	int trainSocketFd = setUpSocket(trainSocketAddr, 1);
-	listen(trainSocketFd, NUMBER_OF_TRAINS);
-	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
-		tempId = i;
-		int clientFd = accept(trainSocketFd, NULL, 0);
-		if (fork() == 0) {
-			printf("Rbc %d, Accettata la connessione di un treno\n", tempId);
-			startServerTrain(clientFd);
-			close(clientFd);
-			cleanUp();
-			return 0;
-		}
-		close(clientFd);
-	}
-	waitChildrenTermination(NUMBER_OF_TRAINS);
-	close(trainSocketFd);
-	unlink(trainSocketAddr);
-	free(trainSocketAddr);
+	startTrainSocket();
 	cleanUp();
 	return 0;
+}
+
+void setUpSharedVariable(void) {
+	int fd = shm_open(RBC_SHARED_NAME, O_RDWR, 0700);
+	dataRbc = (shared_data_rbc *) mmap(0, sizeof(shared_data_rbc), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	close(fd);
+}
+
+void cleanUp(void) {
+	free(exeDirPath);
+	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
+		destroyRoute(starts[i]);
+	}
+	munmap(dataRbc, sizeof(shared_data_rbc));
+	shm_unlink(RBC_SHARED_NAME);
 }
 
 void importRoutes(void) {
@@ -49,22 +46,29 @@ void importRoutes(void) {
 	unlink(ertmsSocketAddr);
 }
 
-void setUpSharedVariable(void) {
-	int fd = shm_open(RBC_SHARED_NAME, O_RDWR, 0700);
-	dataRbc = (shared_data_rbc *) mmap(0, sizeof(shared_data_rbc), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	close(fd);
-}
-
-void cleanUp(void) {
-	free(exeDirPath);
+void startTrainSocket(void) {
+	char *trainSocketAddr = buildPathTrainSocketFile();
+	int trainSocketFd = setUpSocket(trainSocketAddr, 1);
+	listen(trainSocketFd, NUMBER_OF_TRAINS);
 	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
-		destroyRoute(starts[i]);
+		tempId = i;
+		int clientFd = accept(trainSocketFd, NULL, 0);
+		if (fork() == 0) {
+			printf("Rbc %d, Accettata la connessione di un treno\n", tempId);
+			serveTrain(clientFd);
+			close(clientFd);
+			cleanUp();
+			return;
+		}
+		close(clientFd);
 	}
-	munmap(dataRbc, sizeof(shared_data_rbc));
-	shm_unlink(RBC_SHARED_NAME);
+	waitChildrenTermination(NUMBER_OF_TRAINS);
+	close(trainSocketFd);
+	unlink(trainSocketAddr);
+	free(trainSocketAddr);
 }
 
-void startServerTrain(int clientFd) {
+void serveTrain(int clientFd) {
 	while (1) {
 		if (waitForPosition(clientFd) < 0) {
 			printf("Rbc %d: Connessione chiusa\n", tempId);

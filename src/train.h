@@ -53,6 +53,5 @@ struct flock writeLock = {
 	.l_start = 0,
 	.l_len = 1,
 };
-
 int clientFd;
 #endif
