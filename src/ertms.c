@@ -81,13 +81,16 @@ void setUpSharedVariableForRbc(void) {
 		pthread_mutex_init(&dataRbc -> mutexes[i], &mutex_attr);
 	}
 	pthread_mutexattr_destroy(&mutex_attr);
-	for (int i = 0; i < NUMBER_OF_MA; i++) {
-		dataRbc -> ma[i] = 0;
-	}
-	for (int i = 0; i < NUMBER_OF_STATIONS; i++) {
-		dataRbc -> stations[i] = 0;
-	}
+	initializeIntArray(dataRbc -> ma, NUMBER_OF_MA);
+	initializeIntArray(dataRbc -> stations, NUMBER_OF_STATIONS);
+	initializeIntArray(dataRbc -> positions, NUMBER_OF_TRAINS);
 	close(fd);
+}
+
+void initializeIntArray(int *array, int length) {
+	for (int i = 0; i < length; i++) {
+		array[i] = 0;
+	}
 }
 
 void cleanUpSharedVariableForRbc(void) {

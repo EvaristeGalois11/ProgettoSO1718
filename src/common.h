@@ -46,6 +46,7 @@ typedef struct shared_data_rbc {
 	pthread_mutex_t mutexes[NUMBER_OF_MA];
 	int ma[NUMBER_OF_MA];
 	int stations[NUMBER_OF_STATIONS];
+	int positions[NUMBER_OF_TRAINS];
 } shared_data_rbc;
 
 char *buildPathMAxFile(int);

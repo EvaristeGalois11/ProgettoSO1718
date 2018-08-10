@@ -22,6 +22,7 @@ void setUpSharedVariableForTrains(void);
 void cleanUpSharedVariableForTrains(void);
 void launchRbc(void);
 void setUpSharedVariableForRbc(void);
+void initializeIntArray(int *, int);
 void cleanUpSharedVariableForRbc(void);
 void createMAxFiles(void);
 void startTrains(char *);
