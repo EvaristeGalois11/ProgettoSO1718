@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
 	} else if (argc == 3 && strcasecmp(argv[1], ETCS2) == 0 && strcasecmp(argv[2], RBC) == 0) {
 		launchRbc();
 	} else {
-		printf("Invalid argument\n");
+		printf("Invalid argument!\n");
 	}
 	free(exeDirPath);
 	umask(previousMask);
@@ -21,13 +21,13 @@ int main(int argc, char *argv[]) {
 char *getExePath(void) {
 	int size = 15;
 	char *buffer = NULL;
-	int nchars = 0;
+	int read = 0;
 	do {
 		size *= 2;
 		buffer = realloc(buffer, size);
-		nchars = readlink(EXE_INFO_PATH, buffer, size);
-	} while (nchars == size);
-	buffer[nchars] = '\0';
+		read = readlink(EXE_INFO_PATH, buffer, size);
+	} while (read == size);
+	buffer[read] = '\0';
 	return buffer;
 }
 
@@ -101,7 +101,7 @@ void cleanUpSharedVariableForRbc(void) {
 	shm_unlink(RBC_SHARED_NAME);
 }
 
-void createMAxFiles() {
+void createMAxFiles(void) {
 	for (int i = 1; i < NUMBER_OF_MA + 1; i++) {
 		char *path = buildPathMAxFile(i);
 		int fd = open(path, O_CREAT | O_RDWR | O_TRUNC, 0777);
@@ -117,7 +117,7 @@ void startTrains(char *mode) {
 			char *pathTrain = csprintf("%s%s", exeDirPath, TRAIN_PROCESS_NAME);
 			char *id = csprintf("%d", i);
 			execl(pathTrain, pathTrain, id, mode, NULL);
-			perror("Train not started");
+			perror("Train not started!");
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -127,7 +127,7 @@ void startRbc(void) {
 	if (fork() == 0) {
 		char *pathRbc = csprintf("%s%s", exeDirPath, RBC_PROCESS_NAME);
 		execl(pathRbc, pathRbc, NULL);
-		perror("Rbc not started");
+		perror("Rbc not started!");
 		exit(EXIT_FAILURE);
 	}
 }

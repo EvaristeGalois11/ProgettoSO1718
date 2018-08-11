@@ -5,9 +5,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <sys/mman.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 #include "route.h"
 #include "common.h"
 #include "log.h"
@@ -53,5 +52,5 @@ struct flock writeLock = {
 	.l_start = 0,
 	.l_len = 1,
 };
-int clientFd;
+int clientFd = -1;
 #endif

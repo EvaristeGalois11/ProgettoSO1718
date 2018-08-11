@@ -1,13 +1,14 @@
 #ifndef ERTMS_H
 #define ERTMS_H
 #include <stdio.h>
-#include <sys/wait.h>
-#include <sys/mman.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <string.h>
 #include <stdlib.h>
-#include <errno.h>//perror da togliere
+#include <fcntl.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <string.h>
+#include <errno.h>
 #include "common.h"
 #include "route.h"
 

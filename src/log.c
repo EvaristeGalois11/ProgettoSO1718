@@ -27,7 +27,7 @@ char *getLogMessage(int train, int curr, int next, char *response, int isTrain) 
 	return log;
 }
 
-void formatTime() {
+void formatTime(void) {
 	time_t seconds = time(NULL);
 	struct tm* tm_info = localtime(&seconds);
 	strftime(timeBuffer, TIME_BUFFER_LENGTH, TIME_TEMPLATE, tm_info);

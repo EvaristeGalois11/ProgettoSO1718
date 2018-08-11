@@ -2,10 +2,11 @@
 #define RBC_H
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/types.h>
+#include <string.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <sys/mman.h>
 #include "route.h"
 #include "common.h"

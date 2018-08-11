@@ -26,7 +26,9 @@ void setUpSharedVariable(void) {
 void cleanUp(void) {
 	free(exeDirPath);
 	destroyRoute(start);
-	close(clientFd);
+	if (clientFd != -1) {
+		close(clientFd);
+	}
 	munmap(dataTrains, sizeof(shared_data_trains));
 	shm_unlink(TRAIN_SHARED_NAME);
 }
@@ -34,6 +36,7 @@ void cleanUp(void) {
 void connectToSocket(void) {
 	char *trainSocketAddr = buildPathTrainSocketFile();
 	clientFd = setUpSocket(trainSocketAddr, 0);
+	free(trainSocketAddr);
 }
 
 Node *readAndDecodeRoute(void) {
@@ -146,6 +149,7 @@ int openFile(int maId, int *descriptor) {
 		char *path = buildPathMAxFile(maId);
 		printf("Treno %d: aperto file MA%d\n", trainId, maId);
 		*descriptor = open(path, O_RDWR);
+		free(path);
 		return 1;
 	}
 	return 0;

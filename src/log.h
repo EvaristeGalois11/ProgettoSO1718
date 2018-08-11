@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
-#include <locale.h>
 #include "common.h"
 #include "route.h"
 

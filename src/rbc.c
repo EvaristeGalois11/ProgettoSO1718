@@ -124,27 +124,17 @@ void waitForRequest(int clientFd) {
 }
 
 void updatePosition(int trainId, int curr, int next) {
-	//printf("Posizione treno %d: posizione %d\n", trainId, routes[trainId - 1] -> id);
 	routes[trainId - 1] = routes[trainId - 1] -> next;
 	dataRbc -> positions[trainId - 1]++;
-	//printf("Posizione treno %d: posizione %d\n", trainId, routes[trainId - 1] -> id);
 	if (curr < 0) {
-		//printf("Stazione %d: numero treni %d\n", curr, dataRbc -> stations[-curr - 1]);
 		dataRbc -> stations[-curr - 1]--;
-		//printf("Stazione %d: numero treni %d\n", curr, dataRbc -> stations[-curr - 1]);
 	} else {
-		//printf("MA%d: stato %d\n", curr, dataRbc -> ma[curr - 1]);
 		dataRbc -> ma[curr - 1] = 0;
-		//printf("MA%d: stato %d\n", curr, dataRbc -> ma[curr - 1]);
 	}
 	if (next < 0) {
-		//printf("Stazione %d: numero treni %d\n", next, dataRbc -> stations[-next - 1]);
 		dataRbc -> stations[-next - 1]++;
-		//printf("Stazione %d: numero treni %d\n", next, dataRbc -> stations[-next - 1]);
 	} else {
-		//printf("MA%d: stato %d\n", next, dataRbc -> ma[next - 1]);
 		dataRbc -> ma[next - 1] = 1;
-		//printf("MA%d: stato %d\n", next, dataRbc -> ma[next - 1]);
 	}
 }
 
