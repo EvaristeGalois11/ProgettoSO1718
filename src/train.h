@@ -34,7 +34,6 @@ int openFile(int, int *);
 void closeFile(int *);
 void notifyPosition(int, int *);
 void move(void);
-void checkDescriptors(void);
 void writeOneByte(int, char *);
 
 int trainId;

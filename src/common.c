@@ -66,11 +66,8 @@ void createDirIfNotExist(char *dir) {
 }
 
 void waitChildrenTermination(int numChild) {
-	int status;
-	pid_t pid;
 	for (int i = 0; i < numChild; i++) {
-		pid = wait(&status);
-		printf("Child with PID %ld exited with status %d\n", (long) pid, status);
+		wait(NULL);
 	}
 }
 

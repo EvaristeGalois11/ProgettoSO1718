@@ -32,14 +32,10 @@ void importRoutes(void) {
 	int ertmsClientFd = accept(ertmsSocketFd, NULL, 0);
 	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
 		char *line = readLine(ertmsClientFd);
-		printf("Rbc %d: Ricevuta linea: %s\n", tempId, line);
 		routes[i] = generateRoute(line);
 		starts[i] = routes[i];
 		dataRbc -> stations[-(routes[i] -> id) - 1]++;
 		free(line);
-	}
-	for (int i = 0; i < NUMBER_OF_STATIONS; i++) {
-		printf("Rbc %d: Stazione %d: treni presenti %d\n", tempId, i, dataRbc -> stations[i]);
 	}
 	close(ertmsClientFd);
 	close(ertmsSocketFd);
@@ -54,7 +50,6 @@ void startTrainSocket(void) {
 		tempId = i;
 		int clientFd = accept(trainSocketFd, NULL, 0);
 		if (fork() == 0) {
-			printf("Rbc %d, Accettata la connessione di un treno\n", tempId);
 			serveTrain(clientFd);
 			close(clientFd);
 			cleanUp();
@@ -71,7 +66,6 @@ void startTrainSocket(void) {
 void serveTrain(int clientFd) {
 	while (1) {
 		if (waitForPosition(clientFd) < 0) {
-			printf("Rbc %d: Connessione chiusa\n", tempId);
 			break;
 		}
 		waitForRequest(clientFd);
@@ -88,13 +82,10 @@ int waitForPosition(int clientFd) {
 		return -1;
 	}
 	sscanf(str, "%d", &position);
-	printf("Rbc %d: Posizione comunicata %d\n", tempId, position);
 	if (position > 0) {
 		currLock = position - 1;
-		printf("Rbc %d: Richiesto lock %d\n", tempId, currLock);
 		pthread_mutex_lock(&(dataRbc -> mutexes[currLock]));
 	}
-	printf("Rbc %d: Invio risposta %s\n", tempId, OK);
 	write(clientFd, OK, strlen(OK) + 1);
 	free(str);
 	return 0;
@@ -102,12 +93,10 @@ int waitForPosition(int clientFd) {
 
 void waitForRequest(int clientFd) {
 	char *str = readLine(clientFd);
-	printf("Rbc %d: Ricevuta richiesta autorizzazione %s\n", tempId, str);
 	int trainId, curr, next;
 	sscanf(str, "%d,%d,%d", &trainId, &curr, &next);
 	if (next > 0) {
 		nextLock = next - 1;
-		printf("Rbc %d: Richiesto lock %d\n", tempId, nextLock);
 		pthread_mutex_lock(&dataRbc -> mutexes[nextLock]);
 	}
 	char *response;
@@ -117,7 +106,6 @@ void waitForRequest(int clientFd) {
 	} else {
 		response = KO;
 	}
-	printf("Rbc %d: Invio risposta %s\n", tempId, response);
 	logRbc(trainId, curr, next, response);
 	write(clientFd, response, strlen(response) + 1);
 	free(str);
@@ -140,7 +128,6 @@ void updatePosition(int trainId, int curr, int next) {
 
 void unlockMutex(int *id) {
 	if (*id >= 0) {
-		printf("Rbc %d: Sblocco lock %d\n", tempId, *id);
 		pthread_mutex_unlock(&dataRbc -> mutexes[*id]);
 	}
 	*id = -1;
