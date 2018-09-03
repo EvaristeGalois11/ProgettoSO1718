@@ -30,5 +30,4 @@ Node *starts[NUMBER_OF_TRAINS];
 shared_data_rbc *dataRbc;
 int currLock = -1;
 int nextLock = -1;
-int tempId;
 #endif

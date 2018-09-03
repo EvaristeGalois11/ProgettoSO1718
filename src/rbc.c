@@ -40,6 +40,7 @@ void importRoutes(void) {
 	close(ertmsClientFd);
 	close(ertmsSocketFd);
 	unlink(ertmsSocketAddr);
+	free(ertmsSocketAddr);
 }
 
 void startTrainSocket(void) {
@@ -47,7 +48,6 @@ void startTrainSocket(void) {
 	int trainSocketFd = setUpSocket(trainSocketAddr, 1);
 	listen(trainSocketFd, NUMBER_OF_TRAINS);
 	for (int i = 0; i < NUMBER_OF_TRAINS; i++) {
-		tempId = i;
 		int clientFd = accept(trainSocketFd, NULL, 0);
 		if (fork() == 0) {
 			serveTrain(clientFd);

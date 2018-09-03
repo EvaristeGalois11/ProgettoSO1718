@@ -79,7 +79,6 @@ int requestModeEtcs2(int train, int curr, int next) {
 }
 
 void startTravel(void) {
-	int count = 0;
 	do {
 		waitOtherTrains();
 		lockMode(current -> id, &currDescriptor);
@@ -126,7 +125,7 @@ void travelCompleted(void) {
 
 void lockExclusiveMA(int maId, int *descriptor) {
 	if (openFile(maId, descriptor)) {
-		fcntl (*descriptor, F_SETLKW, &writeLock);
+		fcntl(*descriptor, F_SETLKW, &writeLock);
 	}
 }
 
